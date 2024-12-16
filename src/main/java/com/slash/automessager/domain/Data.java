@@ -8,6 +8,7 @@ import java.util.*;
 public class Data {
 
     private Map<String, List<AutoMessageCommand>> guildIdToAutoMessageCommands = new HashMap<>();
+    private Integer messagesSent = 0;
 
     public Map<String, List<AutoMessageCommand>> getGuildIdToAutoMessageCommands() {
         return guildIdToAutoMessageCommands;
@@ -15,6 +16,14 @@ public class Data {
 
     public void setGuildIdToAutoMessageCommands(Map<String, List<AutoMessageCommand>> guildIdToAutoMessageCommands) {
         this.guildIdToAutoMessageCommands = guildIdToAutoMessageCommands;
+    }
+
+    public Integer getMessagesSent() {
+        return messagesSent;
+    }
+
+    public void setMessagesSent(Integer messagesSent) {
+        this.messagesSent = messagesSent;
     }
 
     public String getAutoMessageCommandsDisplay(Guild guild) {

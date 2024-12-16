@@ -22,7 +22,6 @@ public class Application {
     @Bean
     public JDA jda(@Autowired AutoMessagerBotListener listener, @Value("${bot.token}") String token) throws InterruptedException {
         JDA jda = JDABuilder.createDefault(token)
-                .setActivity(Activity.playing("Join Tiziland!! - t!help"))
                 .enableIntents(GatewayIntent.GUILD_MEMBERS)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(listener)

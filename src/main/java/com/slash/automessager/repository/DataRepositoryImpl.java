@@ -67,6 +67,6 @@ public class DataRepositoryImpl implements DataRepository {
     }
 
     private String getFilepath() {
-        return System.getProperty("user.home") + File.separator + "AutoMessagerBot" + File.separator + "data.json";
+        return System.getenv("ProgramData") + File.separator + "AutoMessagerBot" + File.separator + "data.json";
     }
 }
