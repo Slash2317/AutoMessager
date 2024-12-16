@@ -1,5 +1,6 @@
 # Idea
 .idea/*
+/.idea/workspace.xml
 
 # Gradle
 .gradle
