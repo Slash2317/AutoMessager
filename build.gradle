@@ -1,0 +1,120 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+import java.util.stream.Collectors
+
+plugins {
+    id 'java'
+}
+
+group 'com.slash'
+version '1.0'
+
+compileJava.options.encoding = 'UTF-8'
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+String env = project.hasProperty('env') ? project.property('env') : 'dev'
+
+task deploy {
+    outputs.upToDateWhen { false }
+
+    doFirst {
+        String deployFolderName = 'DiscordAutoMessagerBot_' + env
+
+        String deployPath = project.rootDir.absolutePath + '/' + deployFolderName
+        if (new File(deployPath).isDirectory()) {
+            delete(deployPath)
+        }
+    }
+    doLast {
+        String serviceName = 'discordautomessagerbot_' + env
+        String displayName = 'Discord Auto Messager Bot ' + env
+        String deployFolderName = 'DiscordAutoMessagerBot_' + env
+
+        copy {
+            from('deploy/templates') {
+                include '*.bat'
+                filter(ReplaceTokens, tokens: [SERVICE_NAME: serviceName])
+            }
+            into deployFolderName
+        }
+        copy {
+            from('build/libs') {
+                include project.name + '-' + version + '.jar'
+                rename project.name + '-' + version + '.jar', serviceName + '.jar'
+            }
+            from('build/libs') {
+                include 'lib/*'
+            }
+            from('deploy') {
+                include 'windows-service-wrapper.exe'
+                rename 'windows-service-wrapper.exe', serviceName + '.exe'
+            }
+            from('deploy/templates') {
+                include 'service.xml'
+                rename 'service.xml', serviceName + '.xml'
+                filter(ReplaceTokens, tokens: [SERVICE_NAME: serviceName, DISPLAY_NAME: displayName, APP_PROFILE: env])
+            }
+            into deployFolderName + '/service'
+        }
+    }
+}
+
+deploy.dependsOn(assemble)
+
+task deployProd {
+    outputs.upToDateWhen { false }
+
+    doLast {
+        env = 'prod'
+    }
+}
+
+deployProd.finalizedBy(deploy)
+
+configure(deploy) {
+    group = 'deploy'
+    description = 'Creates Deployment files for specified env'
+}
+
+configure(deployProd) {
+    group = 'deploy'
+    description = 'Creates Deployment files for prod env'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    implementation("net.dv8tion:JDA:5.0.0-beta.17")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.14.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.1")
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.runtimeClasspath
+    into 'build/libs/lib'
+}
+
+assemble.dependsOn(copyDependencies)
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'com.slash.automessager.Application',
+                'Class-Path': configurations.runtimeClasspath.files.stream().map {'lib/' + it.name }.distinct().collect(Collectors.joining(' '))
+        )
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

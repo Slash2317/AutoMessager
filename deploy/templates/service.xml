@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service>
+    <id>@SERVICE_NAME@</id>
+    <name>@DISPLAY_NAME@</name>
+    <description>@DISPLAY_NAME@ Windows Service</description>
+    <executable>"%JAVA21_HOME%\bin\java.exe"</executable>
+    <arguments>-Dapp.profiles.active=@APP_PROFILE@ -jar @SERVICE_NAME@.jar</arguments>
+</service>
