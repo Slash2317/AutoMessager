@@ -1,9 +1,11 @@
 package com.slash.automessager;
 
+import com.slash.automessager.domain.Data;
 import com.slash.automessager.handler.AutoMessageRequestHandler;
 import com.slash.automessager.handler.MiscRequestHandler;
+import com.slash.automessager.repository.DataRepository;
+import com.slash.automessager.request.Command;
 import com.slash.automessager.request.RequestContext;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -13,9 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -23,11 +23,13 @@ public class AutoMessagerBotListener extends ListenerAdapter {
 
     private final AutoMessageRequestHandler autoMessageRequestHandler;
     private final MiscRequestHandler miscRequestHandler;
+    private final DataRepository dataRepository;
 
     @Autowired
-    public AutoMessagerBotListener(AutoMessageRequestHandler autoMessageRequestHandler, MiscRequestHandler miscRequestHandler) {
+    public AutoMessagerBotListener(AutoMessageRequestHandler autoMessageRequestHandler, MiscRequestHandler miscRequestHandler, DataRepository dataRepository) {
         this.autoMessageRequestHandler = autoMessageRequestHandler;
         this.miscRequestHandler = miscRequestHandler;
+        this.dataRepository = dataRepository;
     }
 
     @Override
@@ -36,7 +38,15 @@ public class AutoMessagerBotListener extends ListenerAdapter {
             return;
         }
 
-        RequestContext requestContext = RequestContext.from(event);
+        String guildId = event.getGuild().getId();
+        Data data = dataRepository.loadData();
+        String prefix = data != null && data.getGuildIdToPrefix().containsKey(guildId) ? data.getGuildIdToPrefix().get(guildId) : ">";
+
+        handleEvent(event, prefix);
+    }
+
+    private void handleEvent(MessageReceivedEvent event, String prefix) {
+        RequestContext requestContext = RequestContext.from(event, prefix);
 
         if (requestContext.command() == null) {
             return;
@@ -46,31 +56,23 @@ public class AutoMessagerBotListener extends ListenerAdapter {
             case VIEW -> autoMessageRequestHandler.handleViewCommand(requestContext);
             case SETUP -> autoMessageRequestHandler.handleSetupCommand(requestContext);
             case REMOVE -> autoMessageRequestHandler.handleRemoveCommand(requestContext);
-            case HELP -> miscRequestHandler.handleHelpCommand(requestContext);
+            case HELP -> miscRequestHandler.handleHelpCommand(requestContext, prefix);
+            case PREFIX -> miscRequestHandler.handlePrefixCommand(requestContext);
         }
     }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        String command = event.getName();
-
-        if (command.equals("help")) {
-            EmbedBuilder embedBuilder = new EmbedBuilder();
-            embedBuilder.setColor(Color.decode("#a020f0"))
-                    .setDescription("""
-                        **Welcome!** :smiley:
-                        Currently, this bot, Tiziland Bot, does **not** support slash commands for coding and modifying to be easier.
-                        Instead, please use the prefix `t!` in all your commands. For example, t!help.
-                        **For the actual commands list, please use the t!help command in any chat this bot is enabled on.**""");
-
-            event.replyEmbeds(embedBuilder.build()).setAllowedMentions(Collections.emptyList()).queue();
-        }
+        System.out.println("received slash command");
+//        handleEvent(event, "/");
     }
 
     @Override
     public void onGuildReady(GuildReadyEvent event) {
         List<CommandData> commandData = new ArrayList<>();
-        commandData.add(Commands.slash("help", "Gives info about how to use this bot"));
+        for (Command command : Command.values()) {
+            commandData.add(Commands.slash(command.getCommandName(), command.getDescription()));
+        }
         event.getGuild().updateCommands().addCommands(commandData).queue();
     }
 }

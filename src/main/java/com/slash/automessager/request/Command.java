@@ -5,10 +5,11 @@ import java.util.List;
 
 public enum Command {
 
-    SETUP(">setup", "Add a new channel to automate messages in.", List.of("channel", "time", "content")),
-    REMOVE(">remove", "Stop automating messages in the selected channel.", List.of("channel")),
-    VIEW(">view", "View all channels where the bot is automating messages at."),
-    HELP(">help", "View all the bot commands.");
+    SETUP("setup", "Add a new channel to automate messages in.", List.of("channel", "time", "content")),
+    REMOVE("remove", "Stop automating messages in the selected channel.", List.of("channel")),
+    VIEW("view", "View all channels where the bot is automating messages at."),
+    PREFIX("prefix", "Changes the prefix for all bot commands.", List.of("prefix")),
+    HELP("help", "View all the bot commands.");
 
     private final String commandName;
     private final String description;
@@ -37,18 +38,18 @@ public enum Command {
         return parameters;
     }
 
-    public static Command getCommand(String message) {
+    public static Command getCommand(String message, String prefix) {
         for (Command command : Command.values()) {
-            if (message.equals(command.commandName) ||
-                    message.startsWith(command.commandName + " ")) {
+            if (message.equals(prefix + command.commandName) ||
+                    message.startsWith(prefix + command.commandName + " ")) {
                 return command;
             }
         }
         return null;
     }
 
-    public String getCommandFormat() {
-        StringBuilder sb = new StringBuilder(commandName);
+    public String getCommandFormat(String prefix) {
+        StringBuilder sb = new StringBuilder(prefix + commandName);
 
         if (!parameters.isEmpty()) {
             sb.append(" [" + String.join("] [", parameters) + "]");
@@ -56,7 +57,7 @@ public enum Command {
         return sb.toString();
     }
 
-    public String getFullDescription() {
-        return "**" + getCommandFormat() + "**" + " | " + description;
+    public String getFullDescription(String prefix) {
+        return "**" + getCommandFormat(prefix) + "**" + " | " + description;
     }
 }
