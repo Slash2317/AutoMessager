@@ -5,11 +5,10 @@ import java.util.List;
 
 public enum Command {
 
-    VIEW(">view", "Shows list of auto message channels"),
-    SETUP(">setup", "Adds an auto message channel", List.of("channel", "time", "content")),
-    REMOVE(">remove", "Removes an auto message channel", List.of("channel/command number")),
-    HELP(">help", "Shows list of commands"),
-    SLASH_HELP("/help", "Alternative Help command which explains we only support t! prefix.");
+    SETUP(">setup", "Add a new channel to automate messages in.", List.of("channel", "time", "content")),
+    REMOVE(">remove", "Stop automating messages in the selected channel.", List.of("channel")),
+    VIEW(">view", "View all channels where the bot is automating messages at."),
+    HELP(">help", "View all the bot commands.");
 
     private final String commandName;
     private final String description;
@@ -58,6 +57,6 @@ public enum Command {
     }
 
     public String getFullDescription() {
-        return getCommandFormat() + " | " + description;
+        return "**" + getCommandFormat() + "**" + " | " + description;
     }
 }

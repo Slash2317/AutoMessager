@@ -5,22 +5,26 @@ import com.slash.automessager.exception.InvalidPermissionException;
 import com.slash.automessager.repository.DataRepository;
 import com.slash.automessager.request.RequestContext;
 import com.slash.automessager.domain.Data;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 @Service
 public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler {
+
+    private static final Color DISCORD_BLUE = Color.decode("#5566f2");
 
     private final DataRepository dataRepository;
 
@@ -80,12 +84,9 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 command.setMessage(message);
                 command.setDateRan(LocalDateTime.now());
                 commands.add(command);
+                dataRepository.saveData(data);
+                sendSetupEmbed(command, guildChannel, requestContext);
             }
-
-            dataRepository.saveData(data);
-
-            String commandsDisplay = data.getAutoMessageCommandsDisplay(requestContext.event().getGuild());
-            requestContext.event().getChannel().sendMessage("Channel(s) added. The current auto message commands are:\n\n" + commandsDisplay).queue();
         }
         catch (InvalidPermissionException e) {
             requestContext.event().getChannel().sendMessage(e.getMessage()).queue();
@@ -93,6 +94,26 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
         catch (IllegalArgumentException e) {
             requestContext.event().getChannel().sendMessage("The command must follow this format `" + requestContext.command().getFullDescription() + "`").queue();
         }
+    }
+
+    private void sendSetupEmbed(AutoMessageCommand command, GuildChannel guildChannel, RequestContext requestContext) {
+        boolean hours = command.getMinutes() % 60 == 0;
+        Integer time = hours ? command.getMinutes() / 60 : command.getMinutes();
+        String timeDisplay = hours ? "hour(s)" : "minutes";
+        String description = String.format("""
+                #%s [%s]
+                Every %s %s
+                **"%s"**
+                
+                To see all added channels run >view.""", guildChannel.getName(), command.getChannelId(), time, timeDisplay, command.getMessage());
+
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully added new channel")
+                .setColor(DISCORD_BLUE)
+                .setDescription(description)
+                .build();
+
+        requestContext.event().getChannel().sendMessageEmbeds(embed).setAllowedMentions(Collections.emptyList()).queue();
     }
 
     @Override
@@ -117,27 +138,6 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 return;
             }
 
-            try {
-                int commandIndex = Integer.parseInt(arguments.get(0)) - 1;
-                if (commandIndex < 0 || commandIndex >= commands.size()) {
-                    throw new IllegalArgumentException("Invalid index");
-                }
-                commands.remove(commandIndex);
-                dataRepository.saveData(data);
-
-                if (commands.isEmpty()) {
-                    requestContext.event().getChannel().sendMessage("Command removed. There are currently no auto message commands").queue();
-                }
-                else {
-                    String commandsDisplay = data.getAutoMessageCommandsDisplay(requestContext.event().getGuild());
-                    requestContext.event().getChannel().sendMessage("Command removed. The current auto message commands are:\n\n" + commandsDisplay).queue();
-                }
-                return;
-            }
-            catch (NumberFormatException ignore) {
-
-            }
-
             Matcher matcher = Message.MentionType.CHANNEL.getPattern().matcher(arguments.get(0));
             if (!matcher.find()) {
                 throw new IllegalArgumentException("First argument should be a channel or number");
@@ -152,15 +152,17 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 }
             }
 
-            commands.removeAll(commandsToRemove);
-            dataRepository.saveData(data);
+            if (!commandsToRemove.isEmpty()) {
+                commands.removeAll(commandsToRemove);
+                if (commands.isEmpty()) {
+                    data.getGuildIdToAutoMessageCommands().remove(requestContext.event().getGuild().getId());
+                }
+                dataRepository.saveData(data);
 
-            if (commands.isEmpty()) {
-                requestContext.event().getChannel().sendMessage("Command removed. There are currently no auto message commands").queue();
+                sendRemoveEmbed(commandsToRemove, requestContext.event().getGuild().getGuildChannelById(commandsToRemove.getFirst().getChannelId()), requestContext);
             }
             else {
-                String commandsDisplay = data.getAutoMessageCommandsDisplay(requestContext.event().getGuild());
-                requestContext.event().getChannel().sendMessage("Command removed. The current auto message commands are:\n\n" + commandsDisplay).queue();
+                requestContext.event().getChannel().sendMessage("There are currently no auto message commands").queue();
             }
         }
         catch (InvalidPermissionException e) {
@@ -169,6 +171,23 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
         catch (IllegalArgumentException e) {
             requestContext.event().getChannel().sendMessage("The command must follow this format `" + requestContext.command().getFullDescription() + "`").queue();
         }
+    }
+
+    private void sendRemoveEmbed(List<AutoMessageCommand> commands, GuildChannel guildChannel, RequestContext requestContext) {
+        String commandDisplays = getCommandDisplays(commands);
+        String description = String.format("""
+                #%s [%s]
+                %s
+                
+                To see all added channels run >view.""", guildChannel.getName(), guildChannel.getId(), commandDisplays);
+
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully removed channel")
+                .setColor(DISCORD_BLUE)
+                .setDescription(description)
+                .build();
+
+        requestContext.event().getChannel().sendMessageEmbeds(embed).setAllowedMentions(Collections.emptyList()).queue();
     }
 
     @Override
@@ -189,8 +208,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                     requestContext.event().getChannel().sendMessage("There are currently no auto message commands.").queue();
                 }
                 else {
-                    String commandsDisplay = data.getAutoMessageCommandsDisplay(requestContext.event().getGuild());
-                    requestContext.event().getChannel().sendMessage("The current auto message commands are:\n\n" + commandsDisplay).queue();
+                    sendViewEmbeds(autoMessageCommands, requestContext);
                 }
             }
             else {
@@ -203,6 +221,44 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
         catch (IllegalArgumentException e) {
             requestContext.event().getChannel().sendMessage("The command must follow this format `" + requestContext.command().getFullDescription() + "`").queue();
         }
+    }
+
+    private void sendViewEmbeds(List<AutoMessageCommand> commands, RequestContext requestContext) {
+        List<MessageEmbed> embeds = new ArrayList<>();
+        embeds.add(new EmbedBuilder().setTitle("Auto-Message Channels").setColor(DISCORD_BLUE).build());
+
+        Map<String, List<AutoMessageCommand>> channelIdToCommands = commands.stream().collect(Collectors.groupingBy(AutoMessageCommand::getChannelId));
+
+        for (Map.Entry<String, List<AutoMessageCommand>> entry : channelIdToCommands.entrySet()) {
+            GuildChannel guildChannel = requestContext.event().getGuild().getGuildChannelById(entry.getKey());
+            if (guildChannel == null) {
+                continue;
+            }
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            MessageEmbed embed = embedBuilder.setTitle(String.format("#%s [%s]", guildChannel.getName(), guildChannel.getId()))
+                    .setColor(DISCORD_BLUE)
+                    .setDescription(getCommandDisplays(entry.getValue()))
+                    .build();
+            embeds.add(embed);
+        }
+
+        requestContext.event().getChannel().sendMessageEmbeds(embeds).setAllowedMentions(Collections.emptyList()).queue();
+    }
+
+    private String getCommandDisplays(List<AutoMessageCommand> commands) {
+        String commandDisplayTemplate = """
+                Every %s %s
+                **"%s"**""";
+
+        List<String> commandDisplays = new ArrayList<>();
+        for (AutoMessageCommand command : commands) {
+            boolean hours = command.getMinutes() % 60 == 0;
+            Integer time = hours ? command.getMinutes() / 60 : command.getMinutes();
+            String timeDisplay = hours ? "hour(s)" : "minutes";
+            commandDisplays.add(String.format(commandDisplayTemplate, time, timeDisplay, command.getMessage()));
+        }
+        return String.join("\n\n", commandDisplays);
     }
 
     private List<String> getArguments(String argumentsString, String delimiter, int numOfArguments) {
