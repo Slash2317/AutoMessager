@@ -3,12 +3,16 @@ package com.slash.automessager.repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.slash.automessager.domain.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
 
 @Repository
 public class DataRepositoryImpl implements DataRepository {
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public Data loadData() {
@@ -28,8 +32,7 @@ public class DataRepositoryImpl implements DataRepository {
                 }
                 String json = sb.toString();
 
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(json, Data.class);
+                return objectMapper.readValue(json, Data.class);
             }
             catch (IOException e) {
                 throw new RuntimeException(e);
@@ -41,7 +44,7 @@ public class DataRepositoryImpl implements DataRepository {
     public void saveData(Data data) {
         File file = createDataFileIfNeeded();
         try (FileWriter fileWriter = new FileWriter(file)) {
-            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            ObjectWriter ow = objectMapper.writer().withDefaultPrettyPrinter();
             fileWriter.write(ow.writeValueAsString(data));
         }
         catch (IOException e) {

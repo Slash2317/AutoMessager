@@ -50,7 +50,17 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
 
             String channelMention = matcher.group();
             String channelId = channelMention.substring(2, channelMention.length() - 1);
-            Integer minutes = Integer.valueOf(arguments.get(1));
+            String time = arguments.get(1);
+            int minutes;
+            if (time.endsWith("h")) {
+                minutes = Integer.parseInt(arguments.get(1).substring(0, arguments.get(1).length() - 1)) * 60;
+            }
+            else if (time.endsWith("m")) {
+                minutes = Integer.parseInt(arguments.get(1).substring(0, arguments.get(1).length() - 1));
+            }
+            else {
+                minutes = Integer.parseInt(arguments.get(1));
+            }
             String message = arguments.get(2);
 
             String guildId = requestContext.event().getGuild().getId();
@@ -74,8 +84,8 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
 
             dataRepository.saveData(data);
 
-            String channelNames = data.getAutoMessageCommandsDisplay(requestContext.event().getGuild());
-            requestContext.event().getChannel().sendMessage("Channel(s) added. The current auto message commands are:\n" + channelNames).queue();
+            String commandsDisplay = data.getAutoMessageCommandsDisplay(requestContext.event().getGuild());
+            requestContext.event().getChannel().sendMessage("Channel(s) added. The current auto message commands are:\n\n" + commandsDisplay).queue();
         }
         catch (InvalidPermissionException e) {
             requestContext.event().getChannel().sendMessage(e.getMessage()).queue();

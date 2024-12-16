@@ -23,12 +23,14 @@ public class Data {
 
         List<String> displays = new ArrayList<>();
         for (AutoMessageCommand command : guildIdToAutoMessageCommands.get(guild.getId())) {
-            displays.add("[Channel " + idToChannel.get(command.getChannelId()) + " (" + command.getChannelId() + ")\n" +
-                    "Every " + command.getMinutes() + " minutes");
+            boolean hours = command.getMinutes() % 60 == 0;
+            Integer time = hours ? command.getMinutes() / 60 : command.getMinutes();
+            String timeDisplay = hours ? "hour(s)" : "minutes";
+
             displays.add(String.format("""
                     Channel %s (%s)
-                    Every %s minutes
-                    %s""", idToChannel.get(command.getChannelId()), command.getChannelId(), command.getMinutes(), command.getMessage()));
+                    Every %s %s
+                    %s""", idToChannel.get(command.getChannelId()), command.getChannelId(), time, timeDisplay, command.getMessage()));
         }
 
         return String.join("\n\n", displays);
