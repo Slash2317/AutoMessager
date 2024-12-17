@@ -71,7 +71,10 @@ public enum Command {
         return sb.toString();
     }
 
-    public String getFullDescription(String prefix) {
-        return "**" + getCommandFormat(prefix) + "**" + " | " + description;
+    public String getFullDescription(String prefix, boolean bold) {
+        if (bold) {
+            return "**" + getCommandFormat(prefix) + "** | " + description;
+        }
+        return getCommandFormat(prefix) + " | " + description;
     }
 }

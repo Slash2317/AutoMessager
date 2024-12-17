@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +27,7 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
 
     @Override
     public void handleHelpCommand(RequestContext requestContext) {
-        String commandsDisplay = Arrays.stream(Command.values()).map(c -> c.getFullDescription(requestContext.getPrefix())).collect(Collectors.joining("\n"));
+        String commandsDisplay = Arrays.stream(Command.values()).map(c -> c.getFullDescription(requestContext.getPrefix(), true)).collect(Collectors.joining("\n"));
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         MessageEmbed embed = embedBuilder.setTitle(":blue_circle: AUTO-MESSAGER | COMMANDS")
@@ -42,7 +41,8 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
     @Override
     public void handlePrefixCommand(RequestContext requestContext) {
         String prefix = requestContext.getArgument("prefix", String.class);
-        if (prefix.isBlank()) {
+        if (prefix.isBlank() || prefix.trim().equals("/")) {
+            requestContext.sendMessage("Invalid prefix supplied");
             return;
         }
         String guildId = requestContext.getGuild().getId();

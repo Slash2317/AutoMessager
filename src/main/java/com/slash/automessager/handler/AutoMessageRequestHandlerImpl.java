@@ -81,7 +81,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             requestContext.sendMessage(e.getMessage());
         }
         catch (IllegalArgumentException e) {
-            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix()) + "`");
+            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
         }
     }
 
@@ -147,7 +147,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             requestContext.sendMessage(e.getMessage());
         }
         catch (IllegalArgumentException e) {
-            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix()) + "`");
+            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
         }
     }
 
@@ -195,9 +195,6 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
         }
         catch (InvalidPermissionException e) {
             requestContext.sendMessage(e.getMessage());
-        }
-        catch (IllegalArgumentException e) {
-            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix()) + "`");
         }
     }
 
