@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,38 +35,28 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
     @Override
     public void handleSetupCommand(RequestContext requestContext) {
         try {
-            if (requestContext.event().getMember() == null || !canManageChannels(requestContext)) {
+            if (requestContext.getMember() == null || !canManageChannels(requestContext)) {
                 throw new InvalidPermissionException("You do not have permission to add auto message commands");
             }
-            if (requestContext.arguments() == null) {
-                throw new IllegalArgumentException("No arguments supplied");
-            }
 
-            List<String> arguments = getArguments(requestContext.arguments(), " ", 3);
-            if (arguments.size() != 3) {
-                throw new IllegalArgumentException("Expected 3 arguments");
+            String channelId = requestContext.getArgument("channel", String.class);
+            if (channelId == null) {
+                throw new IllegalArgumentException("Invalid channel supplied");
             }
-            Matcher matcher = Message.MentionType.CHANNEL.getPattern().matcher(arguments.get(0));
-            if (!matcher.find()) {
-                throw new IllegalArgumentException("First argument should be a channel");
-            }
-
-            String channelMention = matcher.group();
-            String channelId = channelMention.substring(2, channelMention.length() - 1);
-            String time = arguments.get(1);
+            String time = requestContext.getArgument("time", String.class);
             int minutes;
             if (time.endsWith("h")) {
-                minutes = Integer.parseInt(arguments.get(1).substring(0, arguments.get(1).length() - 1)) * 60;
+                minutes = Integer.parseInt(time.substring(0, time.length() - 1)) * 60;
             }
             else if (time.endsWith("m")) {
-                minutes = Integer.parseInt(arguments.get(1).substring(0, arguments.get(1).length() - 1));
+                minutes = Integer.parseInt(time.substring(0, time.length() - 1));
             }
             else {
-                minutes = Integer.parseInt(arguments.get(1));
+                minutes = Integer.parseInt(time);
             }
-            String message = arguments.get(2);
+            String message = requestContext.getArgument("content", String.class);
 
-            String guildId = requestContext.event().getGuild().getId();
+            String guildId = requestContext.getGuild().getId();
             Data data = dataRepository.loadData();
             if (data == null) {
                 data = new Data();
@@ -76,7 +65,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             data.getGuildIdToAutoMessageCommands().putIfAbsent(guildId, new ArrayList<>());
             List<AutoMessageCommand> commands = data.getGuildIdToAutoMessageCommands().get(guildId);
 
-            GuildChannel guildChannel = requestContext.event().getGuild().getGuildChannelById(channelId);
+            GuildChannel guildChannel = requestContext.getGuild().getGuildChannelById(channelId);
             if (guildChannel != null) {
                 AutoMessageCommand command = new AutoMessageCommand();
                 command.setChannelId(guildChannel.getId());
@@ -89,10 +78,10 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             }
         }
         catch (InvalidPermissionException e) {
-            requestContext.event().getChannel().sendMessage(e.getMessage()).queue();
+            requestContext.sendMessage(e.getMessage());
         }
         catch (IllegalArgumentException e) {
-            requestContext.event().getChannel().sendMessage("The command must follow this format `" + requestContext.command().getFullDescription(requestContext.prefix()) + "`").queue();
+            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix()) + "`");
         }
     }
 
@@ -105,7 +94,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 Every %s %s
                 **"%s"**
                 
-                To see all added channels run >view.""", guildChannel.getName(), command.getChannelId(), time, timeDisplay, command.getMessage());
+                To see all added channels run %sview.""", guildChannel.getName(), command.getChannelId(), time, timeDisplay, command.getMessage(), requestContext.getPrefix());
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully added new channel")
@@ -113,38 +102,27 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 .setDescription(description)
                 .build();
 
-        requestContext.event().getChannel().sendMessageEmbeds(embed).setAllowedMentions(Collections.emptyList()).queue();
+        requestContext.sendMessageEmbeds(embed);
     }
 
     @Override
     public void handleRemoveCommand(RequestContext requestContext) {
         try {
-            if (requestContext.event().getMember() == null || !canManageChannels(requestContext)) {
+            if (requestContext.getMember() == null || !canManageChannels(requestContext)) {
                 throw new InvalidPermissionException("You do not have permission to remove auto message commands");
-            }
-            if (requestContext.arguments() == null) {
-                throw new IllegalArgumentException("No arguments supplied");
-            }
-
-            List<String> arguments = getArguments(requestContext.arguments(), " ", 1);
-            if (arguments.size() != 1) {
-                throw new IllegalArgumentException("Expected 1 argument");
             }
 
             Data data = dataRepository.loadData();
-            List<AutoMessageCommand> commands = data != null ? data.getGuildIdToAutoMessageCommands().get(requestContext.event().getGuild().getId()) : new ArrayList<>();
+            List<AutoMessageCommand> commands = data != null ? data.getGuildIdToAutoMessageCommands().get(requestContext.getGuild().getId()) : new ArrayList<>();
             if (commands.isEmpty()) {
-                requestContext.event().getChannel().sendMessage("There are currently no auto message commands").queue();
+                requestContext.sendMessage("There are currently no auto message commands");
                 return;
             }
 
-            Matcher matcher = Message.MentionType.CHANNEL.getPattern().matcher(arguments.get(0));
-            if (!matcher.find()) {
-                throw new IllegalArgumentException("First argument should be a channel or number");
+            String channelId = requestContext.getArgument("channel", String.class);
+            if (channelId == null) {
+                throw new IllegalArgumentException("Invalid channel supplied");
             }
-
-            String channelMention = matcher.group();
-            String channelId = channelMention.substring(2, channelMention.length() - 1);
             List<AutoMessageCommand> commandsToRemove = new ArrayList<>();
             for (AutoMessageCommand command : commands) {
                 if (command.getChannelId().equals(channelId)) {
@@ -155,21 +133,21 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             if (!commandsToRemove.isEmpty()) {
                 commands.removeAll(commandsToRemove);
                 if (commands.isEmpty()) {
-                    data.getGuildIdToAutoMessageCommands().remove(requestContext.event().getGuild().getId());
+                    data.getGuildIdToAutoMessageCommands().remove(requestContext.getGuild().getId());
                 }
                 dataRepository.saveData(data);
 
-                sendRemoveEmbed(commandsToRemove, requestContext.event().getGuild().getGuildChannelById(commandsToRemove.getFirst().getChannelId()), requestContext);
+                sendRemoveEmbed(commandsToRemove, requestContext.getGuild().getGuildChannelById(commandsToRemove.getFirst().getChannelId()), requestContext);
             }
             else {
-                requestContext.event().getChannel().sendMessage("There are currently no auto message commands").queue();
+                requestContext.sendMessage("There are currently no auto message commands");
             }
         }
         catch (InvalidPermissionException e) {
-            requestContext.event().getChannel().sendMessage(e.getMessage()).queue();
+            requestContext.sendMessage(e.getMessage());
         }
         catch (IllegalArgumentException e) {
-            requestContext.event().getChannel().sendMessage("The command must follow this format `" + requestContext.command().getFullDescription(requestContext.prefix()) + "`").queue();
+            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix()) + "`");
         }
     }
 
@@ -179,7 +157,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 #%s [%s]
                 %s
                 
-                To see all added channels run >view.""", guildChannel.getName(), guildChannel.getId(), commandDisplays);
+                To see all added channels run %sview.""", guildChannel.getName(), guildChannel.getId(), commandDisplays, requestContext.getPrefix());
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully removed channel")
@@ -187,16 +165,16 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 .setDescription(description)
                 .build();
 
-        requestContext.event().getChannel().sendMessageEmbeds(embed).setAllowedMentions(Collections.emptyList()).queue();
+        requestContext.sendMessageEmbeds(embed);
     }
 
     @Override
     public void handleViewCommand(RequestContext requestContext) {
         try {
-            if (requestContext.event().getMember() == null || !canManageChannels(requestContext)) {
+            if (requestContext.getMember() == null || !canManageChannels(requestContext)) {
                 throw new InvalidPermissionException("You do not have permission to view auto message commands");
             }
-            String guildId = requestContext.event().getGuild().getId();
+            String guildId = requestContext.getGuild().getId();
             Data data = dataRepository.loadData();
             if (data == null) {
                 data = new Data();
@@ -205,21 +183,21 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             if (data.getGuildIdToAutoMessageCommands().containsKey(guildId)) {
                 List<AutoMessageCommand> autoMessageCommands = data.getGuildIdToAutoMessageCommands().get(guildId);
                 if (autoMessageCommands.isEmpty()) {
-                    requestContext.event().getChannel().sendMessage("There are currently no auto message commands.").queue();
+                    requestContext.sendMessage("There are currently no auto message commands.");
                 }
                 else {
                     sendViewEmbeds(autoMessageCommands, requestContext);
                 }
             }
             else {
-                requestContext.event().getChannel().sendMessage("There are currently no auto message commands.").queue();
+                requestContext.sendMessage("There are currently no auto message commands.");
             }
         }
         catch (InvalidPermissionException e) {
-            requestContext.event().getChannel().sendMessage(e.getMessage()).queue();
+            requestContext.sendMessage(e.getMessage());
         }
         catch (IllegalArgumentException e) {
-            requestContext.event().getChannel().sendMessage("The command must follow this format `" + requestContext.command().getFullDescription(requestContext.prefix()) + "`").queue();
+            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix()) + "`");
         }
     }
 
@@ -230,7 +208,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
         Map<String, List<AutoMessageCommand>> channelIdToCommands = commands.stream().collect(Collectors.groupingBy(AutoMessageCommand::getChannelId));
 
         for (Map.Entry<String, List<AutoMessageCommand>> entry : channelIdToCommands.entrySet()) {
-            GuildChannel guildChannel = requestContext.event().getGuild().getGuildChannelById(entry.getKey());
+            GuildChannel guildChannel = requestContext.getGuild().getGuildChannelById(entry.getKey());
             if (guildChannel == null) {
                 continue;
             }
@@ -243,7 +221,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             embeds.add(embed);
         }
 
-        requestContext.event().getChannel().sendMessageEmbeds(embeds).setAllowedMentions(Collections.emptyList()).queue();
+        requestContext.sendMessageEmbeds(embeds);
     }
 
     private String getCommandDisplays(List<AutoMessageCommand> commands) {
@@ -261,27 +239,8 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
         return String.join("\n\n", commandDisplays);
     }
 
-    private List<String> getArguments(String argumentsString, String delimiter, int numOfArguments) {
-        if (argumentsString == null || argumentsString.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        if (numOfArguments == 1) {
-            return List.of(argumentsString);
-        }
-        List<String> splitArguments = List.of(argumentsString.split(delimiter));
-
-        if (splitArguments.size() <= numOfArguments) {
-            return splitArguments;
-        }
-
-        List<String> arguments = new ArrayList<>(splitArguments.subList(0, numOfArguments - 1));
-        arguments.add(String.join(delimiter, splitArguments.subList(numOfArguments - 1, splitArguments.size())));
-        return arguments;
-    }
-
     private boolean canManageChannels(RequestContext requestContext) {
-        Member member = requestContext.event().getMember();
+        Member member = requestContext.getMember();
         if (member == null) {
             return false;
         }

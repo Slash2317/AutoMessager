@@ -27,8 +27,8 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
     }
 
     @Override
-    public void handleHelpCommand(RequestContext requestContext, String prefix) {
-        String commandsDisplay = Arrays.stream(Command.values()).map(c -> c.getFullDescription(prefix)).collect(Collectors.joining("\n"));
+    public void handleHelpCommand(RequestContext requestContext) {
+        String commandsDisplay = Arrays.stream(Command.values()).map(c -> c.getFullDescription(requestContext.getPrefix())).collect(Collectors.joining("\n"));
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         MessageEmbed embed = embedBuilder.setTitle(":blue_circle: AUTO-MESSAGER | COMMANDS")
@@ -36,25 +36,39 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
                 .setDescription(commandsDisplay)
                 .build();
 
-        requestContext.event().getChannel().sendMessageEmbeds(embed).setAllowedMentions(Collections.emptyList()).queue();
+        requestContext.sendMessageEmbeds(embed);
     }
 
     @Override
     public void handlePrefixCommand(RequestContext requestContext) {
-        if (requestContext.arguments().isBlank()) {
+        String prefix = requestContext.getArgument("prefix", String.class);
+        if (prefix.isBlank()) {
             return;
         }
-        String guildId = requestContext.event().getGuild().getId();
+        String guildId = requestContext.getGuild().getId();
 
         Data data = dataRepository.loadData();
-        data.getGuildIdToPrefix().put(guildId, requestContext.arguments());
+        data.getGuildIdToPrefix().put(guildId, prefix);
         dataRepository.saveData(data);
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
-        MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully updated prefix to " + requestContext.arguments())
+        MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully updated prefix to " + prefix)
                 .setColor(DISCORD_BLUE)
                 .build();
 
-        requestContext.event().getChannel().sendMessageEmbeds(embed).setAllowedMentions(Collections.emptyList()).queue();
+        requestContext.sendMessageEmbeds(embed);
+    }
+
+    @Override
+    public void handleVoteCommand(RequestContext requestContext) {
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        MessageEmbed embed = embedBuilder.setTitle(":envelope_with_arrow: Vote for Auto Messager ")
+                .setDescription("""
+                        Vote for the bot at Top.gg!
+                        https://top.gg/bot/1318005521986486332""")
+                .setColor(DISCORD_BLUE)
+                .build();
+
+        requestContext.sendMessageEmbeds(embed);
     }
 }
