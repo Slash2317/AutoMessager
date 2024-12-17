@@ -41,7 +41,10 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
     @Override
     public void handlePrefixCommand(RequestContext requestContext) {
         String prefix = requestContext.getArgument("prefix", String.class);
-        if (prefix.isBlank() || prefix.trim().equals("/")) {
+        if (prefix == null || prefix.isBlank()) {
+            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
+        }
+        if (prefix.trim().equals("/")) {
             requestContext.sendMessage("Invalid prefix supplied");
             return;
         }
