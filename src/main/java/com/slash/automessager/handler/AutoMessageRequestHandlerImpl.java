@@ -199,10 +199,13 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
     }
 
     private void sendViewEmbeds(List<AutoMessageCommand> commands, RequestContext requestContext) {
-        List<MessageEmbed> embeds = new ArrayList<>();
-        embeds.add(new EmbedBuilder().setTitle("Auto-Message Channels").setColor(DISCORD_BLUE).build());
-
         Map<String, List<AutoMessageCommand>> channelIdToCommands = commands.stream().collect(Collectors.groupingBy(AutoMessageCommand::getChannelId));
+
+        List<MessageEmbed> embeds = new ArrayList<>();
+        embeds.add(new EmbedBuilder().setTitle("Auto-Message Channels")
+                .setDescription(String.format("**%s channels & %s messages configured**", channelIdToCommands.size(), commands.size()))
+                .setColor(DISCORD_BLUE).build());
+
 
         for (Map.Entry<String, List<AutoMessageCommand>> entry : channelIdToCommands.entrySet()) {
             GuildChannel guildChannel = requestContext.getGuild().getGuildChannelById(entry.getKey());
