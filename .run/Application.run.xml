@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Application" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="com.slash.automessager.Application" />
-    <module name="AutoMessager.main" />
+    <module name="AutoMessager.automessagerbot.main" />
     <option name="PROGRAM_PARAMETERS" value="--spring.profiles.active=dev" />
     <extension name="coverage">
       <pattern>
