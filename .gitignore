@@ -6,7 +6,7 @@
 .gradle
 build
 
-# TizilandBot
-DiscordAutoMessagerBot_*
-src/main/resources/application-dev.yml
-src/main/resources/application-prod.yml
+# automessagerbot
+automessagerbot/DiscordAutoMessagerBot_*
+automessagerbot/src/main/resources/application-dev.yml
+automessagerbot/src/main/resources/application-prod.yml
