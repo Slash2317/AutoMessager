@@ -40,47 +40,55 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             }
 
             String channelId = requestContext.getArgument("channel", String.class);
-            if (channelId == null) {
+            GuildChannel guildChannel = channelId != null ? requestContext.getGuild().getTextChannelById(channelId) : null;
+            if (guildChannel == null) {
                 throw new IllegalArgumentException("Invalid channel supplied");
             }
+
             String time = requestContext.getArgument("time", String.class);
+            if (time == null || time.isBlank()) {
+                throw new IllegalArgumentException("Invalid time supplied");
+            }
             int minutes;
-            if (time.endsWith("h")) {
-                minutes = Integer.parseInt(time.substring(0, time.length() - 1)) * 60;
+            try {
+                if (time.endsWith("h")) {
+                    minutes = Integer.parseInt(time.substring(0, time.length() - 1)) * 60;
+                }
+                else if (time.endsWith("m")) {
+                    minutes = Integer.parseInt(time.substring(0, time.length() - 1));
+                }
+                else {
+                    minutes = Integer.parseInt(time);
+                }
             }
-            else if (time.endsWith("m")) {
-                minutes = Integer.parseInt(time.substring(0, time.length() - 1));
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid time supplied", e);
             }
-            else {
-                minutes = Integer.parseInt(time);
-            }
+
             String message = requestContext.getArgument("content", String.class);
+            if (message == null || message.isBlank()) {
+                throw new IllegalArgumentException("Invalid message supplied");
+            }
 
             String guildId = requestContext.getGuild().getId();
             Data data = dataRepository.loadData();
             if (data == null) {
                 data = new Data();
             }
-
             data.getGuildIdToAutoMessageCommands().putIfAbsent(guildId, new ArrayList<>());
-            List<AutoMessageCommand> commands = data.getGuildIdToAutoMessageCommands().get(guildId);
-
-            GuildChannel guildChannel = requestContext.getGuild().getGuildChannelById(channelId);
-            if (guildChannel != null) {
-                AutoMessageCommand command = new AutoMessageCommand();
-                command.setChannelId(guildChannel.getId());
-                command.setMinutes(minutes);
-                command.setMessage(message);
-                command.setDateRan(LocalDateTime.now());
-                commands.add(command);
-                dataRepository.saveData(data);
-                sendSetupEmbed(command, guildChannel, requestContext);
-            }
+            AutoMessageCommand command = new AutoMessageCommand();
+            command.setChannelId(guildChannel.getId());
+            command.setMinutes(minutes);
+            command.setMessage(message);
+            command.setDateRan(LocalDateTime.now());
+            data.getGuildIdToAutoMessageCommands().get(guildId).add(command);
+            dataRepository.saveData(data);
+            sendSetupEmbed(command, guildChannel, requestContext);
         }
         catch (InvalidPermissionException e) {
             requestContext.sendMessage(e.getMessage());
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException | IllegalStateException e) {
             requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
         }
     }
@@ -129,7 +137,6 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                     commandsToRemove.add(command);
                 }
             }
-
             if (!commandsToRemove.isEmpty()) {
                 commands.removeAll(commandsToRemove);
                 if (commands.isEmpty()) {
@@ -140,7 +147,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 sendRemoveEmbed(commandsToRemove, requestContext.getGuild().getGuildChannelById(commandsToRemove.getFirst().getChannelId()), requestContext);
             }
             else {
-                requestContext.sendMessage("There are currently no auto message commands");
+                requestContext.sendMessage("There are currently no auto message commands for that channel");
             }
         }
         catch (InvalidPermissionException e) {

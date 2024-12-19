@@ -9,7 +9,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 public class SlashRequestContext implements RequestContext {
 
