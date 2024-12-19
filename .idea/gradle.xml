@@ -10,6 +10,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/automessagerbot" />
+            <option value="$PROJECT_DIR$/liquibase" />
           </set>
         </option>
       </GradleProjectSettings>

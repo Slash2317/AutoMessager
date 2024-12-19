@@ -1,4 +1,5 @@
 rootProject.name = "AutoMessager"
 
 include 'automessagerbot'
+include 'liquibase'
 

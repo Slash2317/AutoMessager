@@ -1,0 +1,71 @@
+plugins {
+    id 'org.liquibase.gradle' version '2.2.0'
+}
+
+jar {
+    enabled(false)
+}
+
+processResources {
+    enabled(false)
+}
+
+dependencies {
+    liquibaseRuntime 'info.picocli:picocli:4.7.5'
+    liquibaseRuntime 'org.liquibase:liquibase-core:4.30.0'
+    liquibaseRuntime 'org.apache.commons:commons-lang3:3.13.0'
+    liquibaseRuntime 'org.apache.commons:commons-text:1.11.0'
+    liquibaseRuntime 'org.apache.commons:commons-collections4:4.4'
+    liquibaseRuntime 'org.yaml:snakeyaml:2.2'
+    liquibaseRuntime 'javax.xml.bind:jaxb-api:2.3.1'
+    liquibaseRuntime 'net.sourceforge.jtds:jtds:1.3.1'
+}
+
+task updateDB {
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def env = project.hasProperty("env") ? project.property("env") : "dev_ci"
+
+        def liquibaseProps = new Properties()
+        file("src/main/resources/dbconfig-" + env + ".properties").withInputStream { liquibaseProps.load(it) }
+
+        liquibase {
+            activities {
+                main {
+                    changeLogFile "db.changelog.xml"
+                    driver "net.sourceforge.jtds.jdbc.Driver"
+                    classpath "${projectDir}/src/main/resources"
+                    contexts env
+                    url liquibaseProps['url']
+                    username liquibaseProps['username']
+                    password liquibaseProps['password']
+                    promptForNonLocalDatabase 'false'
+                }
+            }
+        }
+
+        if (env == "build" || env == "dev_ci") {
+            dropAll.exec()
+        }
+    }
+}
+updateDB.finalizedBy(update)
+
+task("updateDev"  , () -> doLast(() -> project.ext.setProperty("env", "dev"   ))).finalizedBy(updateDB)
+task("updateDevCI", () -> doLast(() -> project.ext.setProperty("env", "dev_ci"))).finalizedBy(updateDB)
+
+configure(updateDB) {
+    group = 'build'
+    description = 'runs liquibase on environment given by env system property'
+}
+configure(updateDev) {
+    group = 'build'
+    description = 'runs liquibase on dev environment'
+}
+configure(updateDevCI) {
+    group = 'build'
+    description = 'runs liquibase on dev_ci environment'
+}
+
+test.dependsOn(updateDB)

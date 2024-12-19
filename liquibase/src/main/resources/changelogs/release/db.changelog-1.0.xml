@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet author="slash" id="1">
+        <createTable tableName="BotInstance">
+            <column name="ID" type="INT" autoIncrement="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DiscordID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SentMessagesCount" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="BotInstance" columnNames="ID" constraintName="PK_BotInstance_ID"/>
+    </changeSet>
+
+    <changeSet author="slash" id="2">
+        <createTable tableName="Guild">
+            <column name="ID" type="INT" autoIncrement="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="BotInstanceID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="GuildDiscordID" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="Prefix" type="NVARCHAR(20)"/>
+        </createTable>
+        <addPrimaryKey tableName="Guild" columnNames="ID" constraintName="PK_Guild_ID"/>
+        <addForeignKeyConstraint baseTableName="Guild" baseColumnNames="BotInstanceID"
+                                 referencedTableName="BotInstance" referencedColumnNames="ID"
+                                 constraintName="FK_Guild_BotInstance_BotInstanceID"/>
+    </changeSet>
+
+    <changeSet author="slash" id="3">
+        <createTable tableName="AutoMessageCommand">
+            <column name="ID" type="INT" autoIncrement="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="BotInstanceID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="GuildID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="GuildDiscordID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ChannelDiscordID" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="Minutes" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="Content" type="NVARCHAR(4000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LastRunDate" type="SMALLDATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="AutoMessageCommand" columnNames="ID" constraintName="PK_AutoMessageCommand_ID"/>
+        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="BotInstanceID"
+                                 referencedTableName="BotInstance" referencedColumnNames="ID"
+                                 constraintName="FK_AutoMessageCommand_BotInstance_BotInstanceID"/>
+        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="GuildID"
+                                 referencedTableName="Guild" referencedColumnNames="ID"
+                                 constraintName="FK_AutoMessageCommand_Guild_GuildID"/>
+    </changeSet>
+</databaseChangeLog>
