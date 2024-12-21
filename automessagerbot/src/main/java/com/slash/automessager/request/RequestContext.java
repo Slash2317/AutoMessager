@@ -1,5 +1,6 @@
 package com.slash.automessager.request;
 
+import com.slash.automessager.domain.AutoMessageBot;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -13,6 +14,7 @@ public interface RequestContext {
     String getPrefix();
     Member getMember();
     Guild getGuild();
+    AutoMessageBot getBot();
     MessageChannelUnion getChannel();
     void sendMessage(String message);
     void sendMessageEmbeds(MessageEmbed embed);

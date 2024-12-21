@@ -1,32 +1,69 @@
 package com.slash.automessager.domain;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+@Entity
 public class AutoMessageCommand {
 
-    private String channelId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "AutoMessageCommandID")
+    private Integer id;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
-    private LocalDateTime dateRan;
+    @ManyToOne
+    @JoinColumn(name = "AutoMessageBotID")
+    private AutoMessageBot bot;
+
+    @ManyToOne
+    @JoinColumn(name = "AutoMessageGuildID")
+    private AutoMessageGuild guild;
+
+    private Long guildDiscordId;
+    private Long channelDiscordId;
     private Integer minutes;
-    private String message;
+    private String content;
+    private LocalDateTime lastRunDate;
 
-    public String getChannelId() {
-        return channelId;
+    public Integer getId() {
+        return id;
     }
 
-    public void setChannelId(String channelId) {
-        this.channelId = channelId;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public LocalDateTime getDateRan() {
-        return dateRan;
+    public AutoMessageBot getBot() {
+        return bot;
     }
 
-    public void setDateRan(LocalDateTime dateRan) {
-        this.dateRan = dateRan;
+    public void setBot(AutoMessageBot bot) {
+        this.bot = bot;
+    }
+
+    public AutoMessageGuild getGuild() {
+        return guild;
+    }
+
+    public void setGuild(AutoMessageGuild guild) {
+        this.guild = guild;
+    }
+
+    public Long getGuildDiscordId() {
+        return guildDiscordId;
+    }
+
+    public void setGuildDiscordId(Long guildDiscordId) {
+        this.guildDiscordId = guildDiscordId;
+    }
+
+    public Long getChannelDiscordId() {
+        return channelDiscordId;
+    }
+
+    public void setChannelDiscordId(Long channelDiscordId) {
+        this.channelDiscordId = channelDiscordId;
     }
 
     public Integer getMinutes() {
@@ -37,11 +74,19 @@ public class AutoMessageCommand {
         this.minutes = minutes;
     }
 
-    public String getMessage() {
-        return message;
+    public String getContent() {
+        return content;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public LocalDateTime getLastRunDate() {
+        return lastRunDate;
+    }
+
+    public void setLastRunDate(LocalDateTime lastRunDate) {
+        this.lastRunDate = lastRunDate;
     }
 }

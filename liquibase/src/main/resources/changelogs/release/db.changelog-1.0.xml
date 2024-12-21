@@ -6,26 +6,27 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet author="slash" id="1">
-        <createTable tableName="BotInstance">
-            <column name="ID" type="INT" autoIncrement="true">
+        <createTable tableName="AutoMessageBot">
+            <column name="AutoMessageBotID" type="INT" autoIncrement="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="DiscordID" type="INT">
+            <column name="BotDiscordID" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <column name="SentMessagesCount" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="BotInstance" columnNames="ID" constraintName="PK_BotInstance_ID"/>
+        <addPrimaryKey tableName="AutoMessageBot" columnNames="AutoMessageBotID" constraintName="PK_AutoMessageBot_AutoMessageBotID"/>
+        <addUniqueConstraint tableName="AutoMessageBot" columnNames="BotDiscordID" constraintName="UQ_AutoMessageBot_BotDiscordID"/>
     </changeSet>
 
     <changeSet author="slash" id="2">
-        <createTable tableName="Guild">
-            <column name="ID" type="INT" autoIncrement="true">
+        <createTable tableName="AutoMessageGuild">
+            <column name="AutoMessageGuildID" type="INT" autoIncrement="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="BotInstanceID" type="INT">
+            <column name="AutoMessageBotID" type="INT">
                 <constraints nullable="false"/>
             </column>
             <column name="GuildDiscordID" type="BIGINT">
@@ -33,24 +34,24 @@
             </column>
             <column name="Prefix" type="NVARCHAR(20)"/>
         </createTable>
-        <addPrimaryKey tableName="Guild" columnNames="ID" constraintName="PK_Guild_ID"/>
-        <addForeignKeyConstraint baseTableName="Guild" baseColumnNames="BotInstanceID"
-                                 referencedTableName="BotInstance" referencedColumnNames="ID"
-                                 constraintName="FK_Guild_BotInstance_BotInstanceID"/>
+        <addPrimaryKey tableName="AutoMessageGuild" columnNames="AutoMessageGuildID" constraintName="PK_AutoMessageGuild_AutoMessageGuildID"/>
+        <addForeignKeyConstraint baseTableName="AutoMessageGuild" baseColumnNames="AutoMessageBotID"
+                                 referencedTableName="AutoMessageBot" referencedColumnNames="AutoMessageBotID"
+                                 constraintName="FK_AutoMessageGuild_AutoMessageBot_AutoMessageBotID"/>
     </changeSet>
 
     <changeSet author="slash" id="3">
         <createTable tableName="AutoMessageCommand">
-            <column name="ID" type="INT" autoIncrement="true">
+            <column name="AutoMessageCommandID" type="INT" autoIncrement="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="BotInstanceID" type="INT">
+            <column name="AutoMessageBotID" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="GuildID" type="INT">
+            <column name="AutoMessageGuildID" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="GuildDiscordID" type="INT">
+            <column name="GuildDiscordID" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <column name="ChannelDiscordID" type="BIGINT">
@@ -66,12 +67,12 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="AutoMessageCommand" columnNames="ID" constraintName="PK_AutoMessageCommand_ID"/>
-        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="BotInstanceID"
-                                 referencedTableName="BotInstance" referencedColumnNames="ID"
-                                 constraintName="FK_AutoMessageCommand_BotInstance_BotInstanceID"/>
-        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="GuildID"
-                                 referencedTableName="Guild" referencedColumnNames="ID"
-                                 constraintName="FK_AutoMessageCommand_Guild_GuildID"/>
+        <addPrimaryKey tableName="AutoMessageCommand" columnNames="AutoMessageCommandID" constraintName="PK_AutoMessageCommandID_AutoMessageCommandID"/>
+        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="AutoMessageBotID"
+                                 referencedTableName="AutoMessageBot" referencedColumnNames="AutoMessageBotID"
+                                 constraintName="FK_AutoMessageCommand_AutoMessageBot_AutoMessageBotID"/>
+        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="AutoMessageGuildID"
+                                 referencedTableName="AutoMessageGuild" referencedColumnNames="AutoMessageGuildID"
+                                 constraintName="FK_AutoMessageCommand_AutoMessageGuild_AutoMessageGuildID"/>
     </changeSet>
 </databaseChangeLog>

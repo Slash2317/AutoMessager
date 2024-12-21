@@ -1,10 +1,12 @@
 package com.slash.automessager;
 
-import com.slash.automessager.domain.Data;
+import com.slash.automessager.domain.AutoMessageBot;
+import com.slash.automessager.domain.AutoMessageGuild;
 import com.slash.automessager.handler.AutoMessageRequestHandler;
 import com.slash.automessager.handler.MiscRequestHandler;
-import com.slash.automessager.repository.DataRepository;
 import com.slash.automessager.request.*;
+import com.slash.automessager.service.AutoMessageBotService;
+import jakarta.transaction.Transactional;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -23,26 +25,28 @@ public class AutoMessagerBotListener extends ListenerAdapter {
 
     private final AutoMessageRequestHandler autoMessageRequestHandler;
     private final MiscRequestHandler miscRequestHandler;
-    private final DataRepository dataRepository;
+    private final AutoMessageBotService botService;
 
     @Autowired
-    public AutoMessagerBotListener(AutoMessageRequestHandler autoMessageRequestHandler, MiscRequestHandler miscRequestHandler, DataRepository dataRepository) {
+    public AutoMessagerBotListener(AutoMessageRequestHandler autoMessageRequestHandler, MiscRequestHandler miscRequestHandler, AutoMessageBotService botService) {
         this.autoMessageRequestHandler = autoMessageRequestHandler;
         this.miscRequestHandler = miscRequestHandler;
-        this.dataRepository = dataRepository;
+        this.botService = botService;
     }
 
     @Override
+    @Transactional
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
             return;
         }
 
-        String guildId = event.getGuild().getId();
-        Data data = dataRepository.loadData();
-        String prefix = data != null && data.getGuildIdToPrefix().containsKey(guildId) ? data.getGuildIdToPrefix().get(guildId) : ">";
+        Long guildId = event.getGuild().getIdLong();
+        AutoMessageBot bot = botService.getCurrentBot();
+        AutoMessageGuild guild = bot.getGuilds().stream().filter(g -> g.getDiscordId().equals(guildId)).findFirst().orElse(null);
+        String prefix = guild != null && guild.getPrefix() != null ? guild.getPrefix() : ">";
 
-        handleEvent(new MessageRequestContext(event, prefix));
+        handleEvent(new MessageRequestContext(event, prefix, botService.getCurrentBot()));
     }
 
     private void handleEvent(RequestContext requestContext) {
@@ -61,8 +65,9 @@ public class AutoMessagerBotListener extends ListenerAdapter {
     }
 
     @Override
+    @Transactional
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        handleEvent(new SlashRequestContext(event));
+        handleEvent(new SlashRequestContext(event, botService.getCurrentBot()));
     }
 
     @Override
