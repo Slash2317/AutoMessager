@@ -1,2 +1,10 @@
 bot:
     token: aufhiuhfjehfiehfj
+spring:
+    jpa:
+        show_sql: false
+db:
+    database: AutoMessager
+    server: localhost
+    username: sa
+    password: Password123$
