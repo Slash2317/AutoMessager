@@ -60,6 +60,10 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
                 requestContext.sendMessage("Invalid prefix supplied");
                 return;
             }
+            if (prefix.length() >= 20) {
+                requestContext.sendMessage("Prefix must be at most 20 characters");
+                return;
+            }
             Long guildId = requestContext.getGuild().getIdLong();
 
             AutoMessageBot bot = botService.getCurrentBot();
