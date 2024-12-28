@@ -76,6 +76,7 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
             }
 
             guild.setPrefix(prefix);
+            botService.updatePrefixCache(guildId, prefix);
             botService.save(bot);
 
             EmbedBuilder embedBuilder = new EmbedBuilder();

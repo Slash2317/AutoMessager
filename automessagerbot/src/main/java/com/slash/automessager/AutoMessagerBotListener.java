@@ -18,7 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AutoMessagerBotListener extends ListenerAdapter {
@@ -42,9 +44,13 @@ public class AutoMessagerBotListener extends ListenerAdapter {
         }
 
         Long guildId = event.getGuild().getIdLong();
-        AutoMessageBot bot = botService.getCurrentBot();
-        AutoMessageGuild guild = bot.getGuilds().stream().filter(g -> g.getDiscordId().equals(guildId)).findFirst().orElse(null);
-        String prefix = guild != null && guild.getPrefix() != null ? guild.getPrefix() : ">";
+        String prefix = botService.getPrefixCache().get(guildId);
+        if (prefix == null) {
+            prefix = ">";
+        }
+        if (!event.getMessage().getContentRaw().startsWith(prefix)) {
+            return;
+        }
 
         handleEvent(new MessageRequestContext(event, prefix, botService.getCurrentBot()));
     }

@@ -4,11 +4,13 @@ import com.slash.automessager.domain.AutoMessageBot;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-public interface AutoMessageBotRepository extends JpaRepository<AutoMessageBot, Integer> {
+@Repository
+public interface AutoMessageBotRepository extends JpaRepository<AutoMessageBot, Integer>, AutoMessageBotSqlRepository {
     Optional<AutoMessageBot> findByDiscordId(Long discordId);
 
     @Modifying
