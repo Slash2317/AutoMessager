@@ -14,7 +14,7 @@ public class AutoMessageBotRepositoryImpl implements AutoMessageBotSqlRepository
 
     @Override
     public Map<Long, String> loadPrefixes(Integer botId) {
-        List<Object[]> rows = entityManager.createNativeQuery("SELECT GuildDiscordID, Prefix FROM AutoMessageGuild WHERE AutoMessageBotID = :botId AND Prefix IS NOT NULL")
+        List<Object[]> rows = entityManager.createNativeQuery("SELECT guild_discord_id, prefix FROM auto_message_guild WHERE auto_message_bot_id = :botId AND prefix IS NOT NULL")
                 .setParameter("botId", botId)
                 .getResultList();
 

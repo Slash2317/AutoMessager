@@ -6,73 +6,73 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet author="slash" id="1">
-        <createTable tableName="AutoMessageBot">
-            <column name="AutoMessageBotID" type="INT" autoIncrement="true">
+        <createTable tableName="auto_message_bot">
+            <column name="auto_message_bot_id" type="INT" autoIncrement="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="BotDiscordID" type="BIGINT">
+            <column name="bot_discord_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="SentMessagesCount" type="INT">
+            <column name="sent_messages_count" type="INT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="AutoMessageBot" columnNames="AutoMessageBotID" constraintName="PK_AutoMessageBot_AutoMessageBotID"/>
-        <addUniqueConstraint tableName="AutoMessageBot" columnNames="BotDiscordID" constraintName="UQ_AutoMessageBot_BotDiscordID"/>
+        <addPrimaryKey tableName="auto_message_bot" columnNames="auto_message_bot_id" constraintName="pk_auto_message_bot__auto_message_bot_id"/>
+        <addUniqueConstraint tableName="auto_message_bot" columnNames="bot_discord_id" constraintName="uq_auto_message_bot__bot_discord_id"/>
     </changeSet>
 
     <changeSet author="slash" id="2">
-        <createTable tableName="AutoMessageGuild">
-            <column name="AutoMessageGuildID" type="INT" autoIncrement="true">
+        <createTable tableName="auto_message_guild">
+            <column name="auto_message_guild_id" type="INT" autoIncrement="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="AutoMessageBotID" type="INT">
+            <column name="auto_message_bot_id" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="GuildDiscordID" type="BIGINT">
+            <column name="guild_discord_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="Prefix" type="NVARCHAR(20)"/>
+            <column name="prefix" type="NVARCHAR(20)"/>
         </createTable>
-        <addPrimaryKey tableName="AutoMessageGuild" columnNames="AutoMessageGuildID" constraintName="PK_AutoMessageGuild_AutoMessageGuildID"/>
-        <addForeignKeyConstraint baseTableName="AutoMessageGuild" baseColumnNames="AutoMessageBotID"
-                                 referencedTableName="AutoMessageBot" referencedColumnNames="AutoMessageBotID"
-                                 constraintName="FK_AutoMessageGuild_AutoMessageBot_AutoMessageBotID"/>
+        <addPrimaryKey tableName="auto_message_guild" columnNames="auto_message_guild_id" constraintName="pk_auto_message_guild__auto_message_guild_id"/>
+        <addForeignKeyConstraint baseTableName="auto_message_guild" baseColumnNames="auto_message_bot_id"
+                                 referencedTableName="auto_message_bot" referencedColumnNames="auto_message_bot_id"
+                                 constraintName="fk_auto_message_guild__auto_message_bot__auto_message_bot_id"/>
     </changeSet>
 
     <changeSet author="slash" id="3">
-        <createTable tableName="AutoMessageCommand">
-            <column name="AutoMessageCommandID" type="INT" autoIncrement="true">
+        <createTable tableName="auto_message_command">
+            <column name="auto_message_command_id" type="INT" autoIncrement="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="AutoMessageBotID" type="INT">
+            <column name="auto_message_bot_id" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="AutoMessageGuildID" type="INT">
+            <column name="auto_message_guild_id" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="GuildDiscordID" type="BIGINT">
+            <column name="guild_discord_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="ChannelDiscordID" type="BIGINT">
+            <column name="channel_discord_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="Minutes" type="INT">
+            <column name="minutes" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="Content" type="NVARCHAR(4000)">
+            <column name="content" type="NVARCHAR(4000)">
                 <constraints nullable="false"/>
             </column>
-            <column name="LastRunDate" type="SMALLDATETIME">
+            <column name="last_run_date" type="SMALLDATETIME">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="AutoMessageCommand" columnNames="AutoMessageCommandID" constraintName="PK_AutoMessageCommandID_AutoMessageCommandID"/>
-        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="AutoMessageBotID"
-                                 referencedTableName="AutoMessageBot" referencedColumnNames="AutoMessageBotID"
-                                 constraintName="FK_AutoMessageCommand_AutoMessageBot_AutoMessageBotID"/>
-        <addForeignKeyConstraint baseTableName="AutoMessageCommand" baseColumnNames="AutoMessageGuildID"
-                                 referencedTableName="AutoMessageGuild" referencedColumnNames="AutoMessageGuildID"
-                                 constraintName="FK_AutoMessageCommand_AutoMessageGuild_AutoMessageGuildID"/>
+        <addPrimaryKey tableName="auto_message_command" columnNames="auto_message_command_id" constraintName="pk_auto_message_command_id__auto_message_command_id"/>
+        <addForeignKeyConstraint baseTableName="auto_message_command" baseColumnNames="auto_message_bot_id"
+                                 referencedTableName="auto_message_bot" referencedColumnNames="auto_message_bot_id"
+                                 constraintName="fk_auto_message_command__auto_message_bot__auto_message_bot_id"/>
+        <addForeignKeyConstraint baseTableName="auto_message_command" baseColumnNames="auto_message_guild_id"
+                                 referencedTableName="auto_message_guild" referencedColumnNames="auto_message_guild_id"
+                                 constraintName="fk_auto_message_command__auto_message_guild__auto_message_guild_id"/>
     </changeSet>
 </databaseChangeLog>

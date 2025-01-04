@@ -10,16 +10,16 @@ public class AutoMessageBot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AutoMessageBotID")
+    @Column(name = "auto_message_bot_id")
     private Integer id;
 
-    @Column(name = "BotDiscordID")
+    @Column(name = "bot_discord_id")
     private Long discordId;
 
     private Integer sentMessagesCount;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "AutoMessageBotID", insertable = false, updatable = false)
+    @JoinColumn(name = "auto_message_bot_id", insertable = false, updatable = false)
     private List<AutoMessageGuild> guilds = new ArrayList<>();
 
     public Integer getId() {

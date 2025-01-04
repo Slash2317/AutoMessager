@@ -4,7 +4,7 @@ spring:
     jpa:
         show_sql: false
 db:
-    database: AutoMessager
+    database: auto_messager
     server: localhost
-    username: sa
+    username: postgres
     password: Password123$

@@ -17,11 +17,11 @@ public class AutoMessageCommandRepositoryImpl implements AutoMessageCommandRepos
     @Override
     public List<PendingMessage> findAndUpdatePendingMessages(Integer botId) {
         List<Object[]> rows = entityManager.createNativeQuery("""
-            UPDATE AutoMessageCommand
-            SET LastRunDate = DATEADD(MINUTE, DATEDIFF(MINUTE, 0, GETDATE()), 0)
-            OUTPUT inserted.GuildDiscordID, inserted.ChannelDiscordID, inserted.Content
-            WHERE AutoMessageBotID = :botId
-                AND LastRunDate <= DATEADD(MINUTE, Minutes * -1, GETDATE())""")
+            UPDATE auto_message_command
+            SET last_run_date = DATE_TRUNC('MINUTE', CURRENT_TIMESTAMP)
+            WHERE auto_message_bot_id = :botId
+                AND last_run_date <= (CURRENT_TIMESTAMP - minutes * INTERVAL '1 minute')
+            RETURNING guild_discord_id, channel_discord_id, content""")
                 .setParameter("botId", botId)
                 .getResultList();
 

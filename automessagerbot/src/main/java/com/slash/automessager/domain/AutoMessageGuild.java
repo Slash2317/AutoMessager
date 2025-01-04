@@ -10,20 +10,20 @@ public class AutoMessageGuild {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AutoMessageGuildID")
+    @Column(name = "auto_message_guild_id")
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "AutoMessageBotID")
+    @JoinColumn(name = "auto_message_bot_id")
     private AutoMessageBot bot;
 
-    @Column(name = "GuildDiscordID")
+    @Column(name = "guild_discord_id")
     private Long discordId;
 
     private String prefix;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "AutoMessageGuildID", insertable = false, updatable = false)
+    @JoinColumn(name = "auto_message_guild_id", insertable = false, updatable = false)
     private List<AutoMessageCommand> commands = new ArrayList<>();
 
     public Integer getId() {

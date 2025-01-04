@@ -1,6 +1,6 @@
 package com.slash.automessager.config;
 
-import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
+import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,13 +18,12 @@ public class DatabaseConfig {
 
     @Bean
     public DataSource dataSource() {
-        SQLServerDataSource dataSource = new SQLServerDataSource();
-        dataSource.setTrustServerCertificate(true);
-        dataSource.setEncrypt("true");
+        PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setUser(username);
         dataSource.setPassword(password);
         dataSource.setDatabaseName(database);
-        dataSource.setServerName(server);
+        dataSource.setServerNames(new String[]{ server });
+        dataSource.setPortNumbers(new int[] { 5432 });
         return dataSource;
     }
 

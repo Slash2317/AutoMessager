@@ -9,15 +9,15 @@ public class AutoMessageCommand {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AutoMessageCommandID")
+    @Column(name = "auto_message_command_id")
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "AutoMessageBotID")
+    @JoinColumn(name = "auto_message_bot_id")
     private AutoMessageBot bot;
 
     @ManyToOne
-    @JoinColumn(name = "AutoMessageGuildID")
+    @JoinColumn(name = "auto_message_guild_id")
     private AutoMessageGuild guild;
 
     private Long guildDiscordId;

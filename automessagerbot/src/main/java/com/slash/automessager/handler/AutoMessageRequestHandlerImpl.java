@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +86,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             command.setChannelDiscordId(guildChannel.getIdLong());
             command.setMinutes(minutes);
             command.setContent(message);
-            command.setLastRunDate(LocalDateTime.now());
+            command.setLastRunDate(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
             guild.getCommands().add(command);
             botService.save(bot);
             sendSetupEmbed(command, guildChannel, requestContext);

@@ -15,6 +15,6 @@ public interface AutoMessageBotRepository extends JpaRepository<AutoMessageBot, 
 
     @Modifying
     @Transactional
-    @Query(value = "UPDATE AutoMessageBot SET SentMessagesCount = ?2 WHERE AutoMessageBotID = ?1", nativeQuery = true)
+    @Query(value = "UPDATE auto_message_bot SET sent_messages_count = ?2 WHERE auto_message_bot_id = ?1", nativeQuery = true)
     void updateMessageCount(Integer botId, Integer sentMessagesCount);
 }

@@ -18,7 +18,7 @@ dependencies {
     liquibaseRuntime 'org.apache.commons:commons-collections4:4.4'
     liquibaseRuntime 'org.yaml:snakeyaml:2.2'
     liquibaseRuntime 'javax.xml.bind:jaxb-api:2.3.1'
-    liquibaseRuntime 'net.sourceforge.jtds:jtds:1.3.1'
+    liquibaseRuntime 'org.postgresql:postgresql:42.7.4'
 }
 
 task updateDB {
@@ -34,7 +34,6 @@ task updateDB {
             activities {
                 main {
                     changeLogFile "db.changelog.xml"
-                    driver "net.sourceforge.jtds.jdbc.Driver"
                     classpath "${projectDir}/src/main/resources"
                     contexts env
                     url liquibaseProps['url']
