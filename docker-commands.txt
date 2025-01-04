@@ -1,0 +1,2 @@
+docker build -t automessagertest .
+docker run -it --entrypoint sh automessagertest

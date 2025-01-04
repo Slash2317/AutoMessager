@@ -1,9 +1,0 @@
-FROM gradle:jdk21-corretto AS build
-COPY . .
-RUN gradle :automessagerbot:clean :automessagerbot:build
-
-FROM amazoncorretto:21.0.0
-COPY --from=build automessagerbot/build/libs/lib lib
-COPY --from=build automessagerbot/build/libs/automessagerbot-1.0.jar automessagerbot.jar
-EXPOSE 8080
-ENTRYPOINT ["java","-jar","automessagerbot.jar"]
