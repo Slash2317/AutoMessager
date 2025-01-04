@@ -1,6 +1,11 @@
+bot:
+    token: ${DISCORD_BOT_TOKEN}
+db:
+    database: ${SPRING_DATABASE_NAME}
+    server: ${SPRING_DATABASE_SERVER}
+    username: ${SPRING_DATABASE_USER}
+    password: ${SPRING_DATABASE_PASSWORD}
 spring:
     jpa:
         hibernate:
             dialect: org.hibernate.dialect.PostgreSQLDialect
-#            naming:
-#                physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl

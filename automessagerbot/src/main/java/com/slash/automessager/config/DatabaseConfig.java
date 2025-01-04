@@ -23,7 +23,6 @@ public class DatabaseConfig {
         dataSource.setPassword(password);
         dataSource.setDatabaseName(database);
         dataSource.setServerNames(new String[]{ server });
-        dataSource.setPortNumbers(new int[] { 5432 });
         return dataSource;
     }
 
