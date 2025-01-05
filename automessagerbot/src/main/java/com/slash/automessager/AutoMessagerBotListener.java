@@ -1,7 +1,5 @@
 package com.slash.automessager;
 
-import com.slash.automessager.domain.AutoMessageBot;
-import com.slash.automessager.domain.AutoMessageGuild;
 import com.slash.automessager.handler.AutoMessageRequestHandler;
 import com.slash.automessager.handler.MiscRequestHandler;
 import com.slash.automessager.request.*;
@@ -18,9 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class AutoMessagerBotListener extends ListenerAdapter {
