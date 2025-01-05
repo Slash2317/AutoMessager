@@ -3,42 +3,47 @@ package com.slash.automessager;
 import com.slash.automessager.domain.AutoMessageBot;
 import com.slash.automessager.domain.PendingMessage;
 import com.slash.automessager.repository.AutoMessageCommandRepository;
+import com.slash.automessager.repository.AutoMessageCommandRepositoryImpl;
 import com.slash.automessager.service.AutoMessageBotService;
-import net.dv8tion.jda.api.JDA;
+import com.slash.automessager.service.AutoMessageBotServiceImpl;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@Component
 public class AutoMessageScheduler {
 
     private static final String[] ACTIVITIES = new String[] { "Automating messages", "%s messages sent", ">help" };
 
-    private final JDA jda;
     private final AutoMessageBotService botService;
     private final AutoMessageCommandRepository commandRepository;
 
     private int activityIndex = -1;
 
-    @Autowired
-    public AutoMessageScheduler(JDA jda, AutoMessageBotService botService, AutoMessageCommandRepository commandRepository) {
-        this.jda = jda;
+    public AutoMessageScheduler() {
+        this(new AutoMessageBotServiceImpl(), new AutoMessageCommandRepositoryImpl());
+    }
+
+    public AutoMessageScheduler(AutoMessageBotService botService, AutoMessageCommandRepository commandRepository) {
         this.botService = botService;
         this.commandRepository = commandRepository;
     }
 
-    @Scheduled(initialDelay = 5000, fixedRate = 60000)
-    public void run() {
+    public void start() {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(this::run, 5, 1, TimeUnit.MINUTES);
+    }
+
+    private void run() {
         int sentMessagesCount = 0;
         try {
-            AutoMessageBot bot = botService.getCurrentBot();
+            AutoMessageBot bot = Application.getBotCache().getBot();
             if (bot == null) {
                 return;
             }
@@ -48,11 +53,11 @@ public class AutoMessageScheduler {
                 return;
             }
             sentMessagesCount += pendingMessages.size();
-            botService.updateMessageCount(bot.getId(), sentMessagesCount);
+            botService.updateMessageCount(sentMessagesCount);
 
             Map<Long, List<PendingMessage>> guildIdToPendingMessages = pendingMessages.stream().collect(Collectors.groupingBy(PendingMessage::getGuildId));
             for (Map.Entry<Long, List<PendingMessage>> entry : guildIdToPendingMessages.entrySet()) {
-                Guild guild = jda.getGuildById(entry.getKey());
+                Guild guild = Application.getJda().getGuildById(entry.getKey());
 
                 if (guild == null) {
                     continue;
@@ -73,7 +78,7 @@ public class AutoMessageScheduler {
             if (activityIndex == 1) {
                 activity = String.format(activity, sentMessagesCount);
             }
-            jda.getPresence().setActivity(Activity.playing(activity));
+            Application.getJda().getPresence().setActivity(Activity.playing(activity));
         }
     }
 }

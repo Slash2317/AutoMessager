@@ -1,10 +1,12 @@
 package com.slash.automessager;
 
 import com.slash.automessager.handler.AutoMessageRequestHandler;
+import com.slash.automessager.handler.AutoMessageRequestHandlerImpl;
 import com.slash.automessager.handler.MiscRequestHandler;
+import com.slash.automessager.handler.MiscRequestHandlerImpl;
 import com.slash.automessager.request.*;
 import com.slash.automessager.service.AutoMessageBotService;
-import jakarta.transaction.Transactional;
+import com.slash.automessager.service.AutoMessageBotServiceImpl;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -12,35 +14,32 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class AutoMessagerBotListener extends ListenerAdapter {
 
     private final AutoMessageRequestHandler autoMessageRequestHandler;
     private final MiscRequestHandler miscRequestHandler;
-    private final AutoMessageBotService botService;
 
-    @Autowired
-    public AutoMessagerBotListener(AutoMessageRequestHandler autoMessageRequestHandler, MiscRequestHandler miscRequestHandler, AutoMessageBotService botService) {
+    public AutoMessagerBotListener() {
+        this(new AutoMessageRequestHandlerImpl(), new MiscRequestHandlerImpl());
+    }
+
+    public AutoMessagerBotListener(AutoMessageRequestHandler autoMessageRequestHandler, MiscRequestHandler miscRequestHandler) {
         this.autoMessageRequestHandler = autoMessageRequestHandler;
         this.miscRequestHandler = miscRequestHandler;
-        this.botService = botService;
     }
 
     @Override
-    @Transactional
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
             return;
         }
 
         Long guildId = event.getGuild().getIdLong();
-        String prefix = botService.getPrefixCache().get(guildId);
+        String prefix = Application.getBotCache().getGuildIdToPrefix().get(guildId);
         if (prefix == null) {
             prefix = ">";
         }
@@ -48,7 +47,7 @@ public class AutoMessagerBotListener extends ListenerAdapter {
             return;
         }
 
-        handleEvent(new MessageRequestContext(event, prefix, botService.getCurrentBot()));
+        handleEvent(new MessageRequestContext(event, prefix));
     }
 
     private void handleEvent(RequestContext requestContext) {
@@ -67,9 +66,8 @@ public class AutoMessagerBotListener extends ListenerAdapter {
     }
 
     @Override
-    @Transactional
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        handleEvent(new SlashRequestContext(event, botService.getCurrentBot()));
+        handleEvent(new SlashRequestContext(event));
     }
 
     @Override

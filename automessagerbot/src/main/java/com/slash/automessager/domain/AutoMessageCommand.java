@@ -1,25 +1,12 @@
 package com.slash.automessager.domain;
 
-import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
-@Entity
 public class AutoMessageCommand {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "auto_message_command_id")
     private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name = "auto_message_bot_id")
-    private AutoMessageBot bot;
-
-    @ManyToOne
-    @JoinColumn(name = "auto_message_guild_id")
-    private AutoMessageGuild guild;
-
+    private Integer botId;
+    private Integer guildId;
     private Long guildDiscordId;
     private Long channelDiscordId;
     private Integer minutes;
@@ -34,20 +21,20 @@ public class AutoMessageCommand {
         this.id = id;
     }
 
-    public AutoMessageBot getBot() {
-        return bot;
+    public Integer getBotId() {
+        return botId;
     }
 
-    public void setBot(AutoMessageBot bot) {
-        this.bot = bot;
+    public void setBotId(Integer botId) {
+        this.botId = botId;
     }
 
-    public AutoMessageGuild getGuild() {
-        return guild;
+    public Integer getGuildId() {
+        return guildId;
     }
 
-    public void setGuild(AutoMessageGuild guild) {
-        this.guild = guild;
+    public void setGuildId(Integer guildId) {
+        this.guildId = guildId;
     }
 
     public Long getGuildDiscordId() {

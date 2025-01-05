@@ -1,6 +1,5 @@
 package com.slash.automessager.request;
 
-import com.slash.automessager.domain.AutoMessageBot;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -15,12 +14,10 @@ public class SlashRequestContext implements RequestContext {
 
     private SlashCommandInteractionEvent event;
     private Command command;
-    private AutoMessageBot bot;
 
-    public SlashRequestContext(SlashCommandInteractionEvent event, AutoMessageBot bot) {
+    public SlashRequestContext(SlashCommandInteractionEvent event) {
         this.event = event;
         this.command = Command.getCommandByName(event.getName());
-        this.bot = bot;
     }
 
     @Override
@@ -64,11 +61,6 @@ public class SlashRequestContext implements RequestContext {
     @Override
     public MessageChannelUnion getChannel() {
         return event.getChannel();
-    }
-
-    @Override
-    public AutoMessageBot getBot() {
-        return bot;
     }
 
     @Override

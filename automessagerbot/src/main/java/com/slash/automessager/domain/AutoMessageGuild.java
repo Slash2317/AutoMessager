@@ -1,30 +1,11 @@
 package com.slash.automessager.domain;
 
-import jakarta.persistence.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-@Entity
 public class AutoMessageGuild {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "auto_message_guild_id")
     private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name = "auto_message_bot_id")
-    private AutoMessageBot bot;
-
-    @Column(name = "guild_discord_id")
+    private Integer botId;
     private Long discordId;
-
     private String prefix;
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "auto_message_guild_id", insertable = false, updatable = false)
-    private List<AutoMessageCommand> commands = new ArrayList<>();
 
     public Integer getId() {
         return id;
@@ -34,12 +15,12 @@ public class AutoMessageGuild {
         this.id = id;
     }
 
-    public AutoMessageBot getBot() {
-        return bot;
+    public Integer getBotId() {
+        return botId;
     }
 
-    public void setBot(AutoMessageBot bot) {
-        this.bot = bot;
+    public void setBotId(Integer botId) {
+        this.botId = botId;
     }
 
     public Long getDiscordId() {
@@ -56,13 +37,5 @@ public class AutoMessageGuild {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
-    }
-
-    public List<AutoMessageCommand> getCommands() {
-        return commands;
-    }
-
-    public void setCommands(List<AutoMessageCommand> commands) {
-        this.commands = commands;
     }
 }

@@ -1,15 +1,15 @@
 package com.slash.automessager.handler;
 
+import com.slash.automessager.Application;
 import com.slash.automessager.domain.*;
 import com.slash.automessager.exception.InvalidPermissionException;
 import com.slash.automessager.request.RequestContext;
 import com.slash.automessager.service.AutoMessageBotService;
+import com.slash.automessager.service.AutoMessageBotServiceImpl;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -19,14 +19,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Service
 public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler {
 
     private static final Color DISCORD_BLUE = Color.decode("#5566f2");
 
     private final AutoMessageBotService botService;
 
-    @Autowired
+    public AutoMessageRequestHandlerImpl() {
+        this(new AutoMessageBotServiceImpl());
+    }
+
     public AutoMessageRequestHandlerImpl(AutoMessageBotService botService) {
         this.botService = botService;
     }
@@ -68,27 +70,29 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             if (message == null || message.isBlank()) {
                 throw new IllegalArgumentException("Invalid message supplied");
             }
-            Long guildId = requestContext.getGuild().getIdLong();
 
-            AutoMessageBot bot = botService.getCurrentBot();
-            AutoMessageGuild guild = bot.getGuilds().stream().filter(g -> g.getDiscordId().equals(guildId)).findFirst().orElse(null);
-            if (guild == null) {
-                guild = new AutoMessageGuild();
-                guild.setBot(bot);
-                guild.setDiscordId(guildId);
-                bot.getGuilds().add(guild);
+            BasicGuildInfo guildInfo = botService.loadGuildInfo(requestContext.getGuild().getIdLong());
+            Integer guildId;
+            if (guildInfo == null) {
+                AutoMessageGuild guild = new AutoMessageGuild();
+                guild.setBotId(Application.getBotCache().getBot().getId());
+                guild.setDiscordId(requestContext.getGuild().getIdLong());
+                guildId = botService.insertGuild(guild);
+            }
+            else {
+                guildId = guildInfo.getGuildId();
             }
 
+
             AutoMessageCommand command = new AutoMessageCommand();
-            command.setBot(bot);
-            command.setGuild(guild);
-            command.setGuildDiscordId(guildId);
+            command.setBotId(Application.getBotCache().getBot().getId());
+            command.setGuildId(guildId);
+            command.setGuildDiscordId(requestContext.getGuild().getIdLong());
             command.setChannelDiscordId(guildChannel.getIdLong());
             command.setMinutes(minutes);
             command.setContent(message);
             command.setLastRunDate(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-            guild.getCommands().add(command);
-            botService.save(bot);
+            botService.insertCommand(command);
             sendSetupEmbed(command, guildChannel, requestContext);
         }
         catch (InvalidPermissionException e) {
@@ -125,36 +129,20 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             if (requestContext.getMember() == null || !canManageChannels(requestContext)) {
                 throw new InvalidPermissionException("You do not have permission to remove auto message commands");
             }
+            Long channelDiscordId = requestContext.getArgument("channel", Long.class);
+            if (channelDiscordId == null) {
+                throw new IllegalArgumentException("Invalid channel supplied");
+            }
 
-            AutoMessageBot bot = botService.getCurrentBot();
-            AutoMessageGuild guild = bot.getGuilds().stream().filter(g -> g.getDiscordId().equals(requestContext.getGuild().getIdLong())).findFirst().orElse(null);
-            if (guild == null || guild.getCommands().isEmpty()) {
-                requestContext.sendMessage("There are currently no auto message commands");
+            List<AutoMessageCommand> commands = botService.getCommandsForGuild(requestContext.getGuild().getIdLong());
+            List<AutoMessageCommand> channelCommands = commands.stream().filter(c -> c.getChannelDiscordId().equals(channelDiscordId)).toList();
+            if (channelCommands.isEmpty()) {
+                requestContext.sendMessage("There are currently no auto message commands for that channel");
                 return;
             }
 
-            Long channelId = requestContext.getArgument("channel", Long.class);
-            if (channelId == null) {
-                throw new IllegalArgumentException("Invalid channel supplied");
-            }
-            List<AutoMessageCommand> commandsToRemove = new ArrayList<>();
-            for (AutoMessageCommand command : guild.getCommands()) {
-                if (command.getChannelDiscordId().equals(channelId)) {
-                    commandsToRemove.add(command);
-                }
-            }
-            if (!commandsToRemove.isEmpty()) {
-                guild.getCommands().removeAll(commandsToRemove);
-                if (guild.getCommands().isEmpty() && guild.getPrefix() == null) {
-                    bot.getGuilds().remove(guild);
-                }
-                botService.save(bot);
-
-                sendRemoveEmbed(commandsToRemove, requestContext.getGuild().getGuildChannelById(commandsToRemove.getFirst().getChannelDiscordId()), requestContext);
-            }
-            else {
-                requestContext.sendMessage("There are currently no auto message commands for that channel");
-            }
+            botService.deleteCommands(channelCommands.stream().map(AutoMessageCommand::getId).toList());
+            sendRemoveEmbed(channelCommands, requestContext.getGuild().getGuildChannelById(channelCommands.get(0).getChannelDiscordId()), requestContext);
         }
         catch (InvalidPermissionException e) {
             requestContext.sendMessage(e.getMessage());
@@ -187,20 +175,13 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             if (requestContext.getMember() == null || !canManageChannels(requestContext)) {
                 throw new InvalidPermissionException("You do not have permission to view auto message commands");
             }
-            String guildId = requestContext.getGuild().getId();
-            AutoMessageBot bot = botService.getCurrentBot();
-            AutoMessageGuild guild = bot.getGuilds().stream().filter(g -> g.getDiscordId().equals(requestContext.getGuild().getIdLong())).findFirst().orElse(null);
-            if (guild != null) {
-                List<AutoMessageCommand> autoMessageCommands = guild.getCommands();
-                if (autoMessageCommands.isEmpty()) {
-                    requestContext.sendMessage("There are currently no auto message commands.");
-                }
-                else {
-                    sendViewEmbeds(autoMessageCommands, requestContext);
-                }
+
+            List<AutoMessageCommand> commands = botService.getCommandsForGuild(requestContext.getGuild().getIdLong());
+            if (commands.isEmpty()) {
+                requestContext.sendMessage("There are currently no auto message commands.");
             }
             else {
-                requestContext.sendMessage("There are currently no auto message commands.");
+                sendViewEmbeds(commands, requestContext);
             }
         }
         catch (InvalidPermissionException e) {

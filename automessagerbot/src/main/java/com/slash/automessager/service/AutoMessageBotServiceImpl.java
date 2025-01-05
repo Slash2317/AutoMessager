@@ -1,66 +1,87 @@
 package com.slash.automessager.service;
 
+import com.slash.automessager.Application;
+import com.slash.automessager.BotCache;
 import com.slash.automessager.domain.AutoMessageBot;
-import com.slash.automessager.repository.AutoMessageBotRepository;
-import net.dv8tion.jda.api.JDA;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import com.slash.automessager.domain.AutoMessageCommand;
+import com.slash.automessager.domain.AutoMessageGuild;
+import com.slash.automessager.domain.BasicGuildInfo;
+import com.slash.automessager.repository.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-@Service
 public class AutoMessageBotServiceImpl implements AutoMessageBotService {
 
-    private final JDA jda;
     private final AutoMessageBotRepository botRepository;
-    private final Map<Long, String> guildIdToPrefix = new HashMap<>();
+    private final AutoMessageGuildRepository guildRepository;
+    private final AutoMessageCommandRepository commandRepository;
 
-    @Autowired
-    public AutoMessageBotServiceImpl(JDA jda, AutoMessageBotRepository botRepository) {
-        this.jda = jda;
+    public AutoMessageBotServiceImpl() {
+        this(new AutoMessageBotRepositoryImpl(), new AutoMessageGuildRepositoryImpl(), new AutoMessageCommandRepositoryImpl());
+    }
+
+    public AutoMessageBotServiceImpl(AutoMessageBotRepository botRepository, AutoMessageGuildRepository guildRepository, AutoMessageCommandRepository commandRepository) {
         this.botRepository = botRepository;
+        this.guildRepository = guildRepository;
+        this.commandRepository = commandRepository;
     }
 
     @Override
-    public AutoMessageBot getCurrentBot() {
-        Long discordId = jda.getSelfUser().getApplicationIdLong();
-        return botRepository.findByDiscordId(discordId).orElse(null);
+    public void updateMessageCount(Integer sentMessagesCount) {
+        botRepository.updateMessageCount(Application.getBotCache().getBot().getId(), sentMessagesCount);
+        Application.getBotCache().getBot().setSentMessagesCount(sentMessagesCount);
     }
 
     @Override
-    public Map<Long, String> getPrefixCache() {
-        return guildIdToPrefix;
+    public BasicGuildInfo loadGuildInfo(Long guildDiscordId) {
+        return guildRepository.findGuildInfoByBotIdAndGuildDiscordId(Application.getBotCache().getBot().getId(), guildDiscordId);
     }
 
     @Override
-    public void updatePrefixCache(Long guildId, String prefix) {
-        guildIdToPrefix.put(guildId, prefix);
+    public Integer insertGuild(AutoMessageGuild guild) {
+        Integer guildId = guildRepository.insertGuild(guild);
+        if (guild.getPrefix() != null) {
+            Application.getBotCache().getGuildIdToPrefix().put(guild.getDiscordId(), guild.getPrefix());
+        }
+        return guildId;
     }
 
     @Override
-    public void updateMessageCount(Integer botId, Integer sentMessagesCount) {
-        botRepository.updateMessageCount(botId, sentMessagesCount);
+    public void updateGuildPrefix(Integer guildId, Long guildDiscordId, String prefix) {
+        guildRepository.updateGuildPrefix(guildId, prefix);
+        Application.getBotCache().getGuildIdToPrefix().put(guildDiscordId, prefix);
     }
 
     @Override
-    public void save(AutoMessageBot bot) {
-        botRepository.save(bot);
+    public List<AutoMessageCommand> getCommandsForGuild(Long guildDiscordId) {
+        return commandRepository.findAllByBotIdAndGuildDiscordId(Application.getBotCache().getBot().getId(), guildDiscordId);
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    private void initialSetup() {
-        AutoMessageBot bot = getCurrentBot();
+    @Override
+    public void insertCommand(AutoMessageCommand command) {
+        commandRepository.insertCommand(command);
+    }
+
+    @Override
+    public void deleteCommands(List<Integer> commandIds) {
+        commandRepository.deleteAllByIdIn(commandIds);
+    }
+
+    @Override
+    public BotCache createBotCache() {
+        BotCache botCache = new BotCache();
+        Long discordId = Application.getJda().getSelfUser().getApplicationIdLong();
+        AutoMessageBot bot = botRepository.findByDiscordId(discordId).orElse(null);
         if (bot == null) {
             bot = new AutoMessageBot();
-            bot.setDiscordId(jda.getSelfUser().getApplicationIdLong());
+            bot.setDiscordId(Application.getJda().getSelfUser().getApplicationIdLong());
             bot.setSentMessagesCount(0);
-            botRepository.save(bot);
+            bot.setId(botRepository.insertBot(bot));
         }
         else {
-            guildIdToPrefix.putAll(botRepository.loadPrefixes(bot.getId()));
+            botCache.setGuildIdToPrefix(botRepository.loadPrefixes(bot.getId()));
         }
+        botCache.setBot(bot);
+        return botCache;
     }
 }

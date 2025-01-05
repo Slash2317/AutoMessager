@@ -8,8 +8,7 @@ build
 
 # automessagerbot
 automessagerbot/DiscordAutoMessagerBot_*
-automessagerbot/src/main/resources/application-dev.yml
-automessagerbot/src/main/resources/application-prod.yml
+automessagerbot/src/main/resources/config-dev.properties
 
 # liquibase
 liquibase/src/main/resources/dbconfig-dev.properties

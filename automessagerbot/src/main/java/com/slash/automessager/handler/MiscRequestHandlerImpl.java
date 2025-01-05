@@ -1,33 +1,34 @@
 package com.slash.automessager.handler;
 
-import com.slash.automessager.domain.AutoMessageBot;
+import com.slash.automessager.Application;
 import com.slash.automessager.domain.AutoMessageGuild;
+import com.slash.automessager.domain.BasicGuildInfo;
 import com.slash.automessager.exception.InvalidPermissionException;
 import com.slash.automessager.request.Command;
 import com.slash.automessager.request.RequestContext;
 import com.slash.automessager.service.AutoMessageBotService;
-import jakarta.transaction.Transactional;
+import com.slash.automessager.service.AutoMessageBotServiceImpl;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
 public class MiscRequestHandlerImpl implements MiscRequestHandler {
 
     private static final Color DISCORD_BLUE = Color.decode("#5566f2");
 
     private final AutoMessageBotService botService;
 
-    @Autowired
+    public MiscRequestHandlerImpl() {
+        this(new AutoMessageBotServiceImpl());
+    }
+
     public MiscRequestHandlerImpl(AutoMessageBotService botService) {
         this.botService = botService;
     }
@@ -46,7 +47,6 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
     }
 
     @Override
-    @Transactional
     public void handlePrefixCommand(RequestContext requestContext) {
         try {
             if (requestContext.getMember() == null || !canManageChannels(requestContext)) {
@@ -64,20 +64,17 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
                 requestContext.sendMessage("Prefix must be at most 20 characters");
                 return;
             }
-            Long guildId = requestContext.getGuild().getIdLong();
-
-            AutoMessageBot bot = botService.getCurrentBot();
-            AutoMessageGuild guild = bot.getGuilds().stream().filter(g -> g.getDiscordId().equals(guildId)).findFirst().orElse(null);
-            if (guild == null) {
-                guild = new AutoMessageGuild();
-                guild.setBot(bot);
-                guild.setDiscordId(guildId);
-                bot.getGuilds().add(guild);
+            BasicGuildInfo guildInfo = botService.loadGuildInfo(requestContext.getGuild().getIdLong());
+            if (guildInfo == null) {
+                AutoMessageGuild guild = new AutoMessageGuild();
+                guild.setBotId(Application.getBotCache().getBot().getId());
+                guild.setDiscordId(requestContext.getGuild().getIdLong());
+                guild.setPrefix(prefix);
+                botService.insertGuild(guild);
             }
-
-            guild.setPrefix(prefix);
-            botService.updatePrefixCache(guildId, prefix);
-            botService.save(bot);
+            else {
+                botService.updateGuildPrefix(guildInfo.getGuildId(), prefix);
+            }
 
             EmbedBuilder embedBuilder = new EmbedBuilder();
             MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully updated prefix to " + prefix)

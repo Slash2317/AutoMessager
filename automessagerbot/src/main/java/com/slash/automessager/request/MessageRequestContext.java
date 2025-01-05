@@ -1,6 +1,5 @@
 package com.slash.automessager.request;
 
-import com.slash.automessager.domain.AutoMessageBot;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -18,12 +17,10 @@ public class MessageRequestContext implements RequestContext {
     private Command command;
     private Map<String, String> nameToArgument = new HashMap<>();
     private String prefix;
-    private AutoMessageBot bot;
 
-    public MessageRequestContext(MessageReceivedEvent event, String prefix, AutoMessageBot bot) {
+    public MessageRequestContext(MessageReceivedEvent event, String prefix) {
         this.event = event;
         this.prefix = prefix;
-        this.bot = bot;
 
         Command command = Command.getCommandByMessage(event.getMessage().getContentRaw(), prefix);
         if (command != null) {
@@ -98,11 +95,6 @@ public class MessageRequestContext implements RequestContext {
     @Override
     public MessageChannelUnion getChannel() {
         return event.getChannel();
-    }
-
-    @Override
-    public AutoMessageBot getBot() {
-        return bot;
     }
 
     @Override
