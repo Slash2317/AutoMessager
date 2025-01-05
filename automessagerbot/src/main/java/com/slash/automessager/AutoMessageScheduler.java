@@ -37,7 +37,7 @@ public class AutoMessageScheduler {
 
     public void start() {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(this::run, 5, 1, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(this::run, 5, 60, TimeUnit.SECONDS);
     }
 
     private void run() {

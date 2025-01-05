@@ -73,7 +73,7 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
                 botService.insertGuild(guild);
             }
             else {
-                botService.updateGuildPrefix(guildInfo.getGuildId(), prefix);
+                botService.updateGuildPrefix(guildInfo.getGuildId(), requestContext.getGuild().getIdLong(), prefix);
             }
 
             EmbedBuilder embedBuilder = new EmbedBuilder();

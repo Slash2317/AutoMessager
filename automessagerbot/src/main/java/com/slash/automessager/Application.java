@@ -18,7 +18,7 @@ public class Application {
     private static BotCache botCache;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        String env = System.getProperty("app.profiles.active");
+        String env = System.getenv("app.profiles.active");
         String propertiesFilename;
         if (env == null) {
             propertiesFilename = "config.properties";
