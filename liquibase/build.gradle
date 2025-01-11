@@ -67,4 +67,4 @@ configure(updateDevCI) {
     description = 'runs liquibase on dev_ci environment'
 }
 
-test.dependsOn(updateDB)
+//test.dependsOn(updateDB)
