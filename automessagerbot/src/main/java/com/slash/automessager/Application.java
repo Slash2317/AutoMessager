@@ -50,6 +50,7 @@ public class Application {
 
         AutoMessageScheduler scheduler = new AutoMessageScheduler();
         scheduler.start();
+        System.out.println("Bot started successfully!");
     }
 
     private static DataSource createDataSource(Properties props) {

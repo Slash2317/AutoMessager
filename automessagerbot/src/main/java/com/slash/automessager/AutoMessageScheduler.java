@@ -58,11 +58,9 @@ public class AutoMessageScheduler {
             Map<Long, List<PendingMessage>> guildIdToPendingMessages = pendingMessages.stream().collect(Collectors.groupingBy(PendingMessage::getGuildId));
             for (Map.Entry<Long, List<PendingMessage>> entry : guildIdToPendingMessages.entrySet()) {
                 Guild guild = Application.getJda().getGuildById(entry.getKey());
-
                 if (guild == null) {
                     continue;
                 }
-
                 for (PendingMessage pendingMessage : entry.getValue()) {
                     TextChannel channel = guild.getTextChannelById(pendingMessage.getChannelId());
                     if (channel == null) {
@@ -71,6 +69,9 @@ public class AutoMessageScheduler {
                     channel.sendMessage(pendingMessage.getContent()).queue();
                 }
             }
+        }
+        catch (Throwable e) {
+            e.printStackTrace();
         }
         finally {
             activityIndex = (activityIndex + 1) % 3;
