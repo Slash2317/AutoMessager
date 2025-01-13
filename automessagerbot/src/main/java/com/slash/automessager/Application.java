@@ -35,6 +35,7 @@ public class Application {
             e.printStackTrace();
             throw e;
         }
+        System.setProperty("embed.color", props.getProperty("embed.color", "#5566f2"));
 
         dataSource = createDataSource(props);
         try {

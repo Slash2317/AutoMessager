@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 
 public class MiscRequestHandlerImpl implements MiscRequestHandler {
 
-    private static final Color DISCORD_BLUE = Color.decode("#5566f2");
-
     private final AutoMessageBotService botService;
 
     public MiscRequestHandlerImpl() {
@@ -39,7 +37,7 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         MessageEmbed embed = embedBuilder.setTitle(":blue_circle: AUTO-MESSAGER | COMMANDS")
-                .setColor(DISCORD_BLUE)
+                .setColor(getEmbedColor())
                 .setDescription(commandsDisplay)
                 .build();
 
@@ -57,11 +55,11 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
                 throw new IllegalArgumentException("No prefix supplied");
             }
             if (prefix.trim().equals("/")) {
-                requestContext.sendMessage("Invalid prefix supplied");
+                requestContext.sendSimpleMessageEmbed("Invalid prefix supplied");
                 return;
             }
             if (prefix.length() >= 20) {
-                requestContext.sendMessage("Prefix must be at most 20 characters");
+                requestContext.sendSimpleMessageEmbed("Prefix must be at most 20 characters");
                 return;
             }
             BasicGuildInfo guildInfo = botService.loadGuildInfo(requestContext.getGuild().getIdLong());
@@ -78,16 +76,16 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
 
             EmbedBuilder embedBuilder = new EmbedBuilder();
             MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully updated prefix to " + prefix)
-                    .setColor(DISCORD_BLUE)
+                    .setColor(getEmbedColor())
                     .build();
 
             requestContext.sendMessageEmbeds(embed);
         }
         catch (InvalidPermissionException e) {
-            requestContext.sendMessage(e.getMessage());
+            requestContext.sendSimpleMessageEmbed(e.getMessage());
         }
         catch (IllegalArgumentException e) {
-            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
+            requestContext.sendSimpleMessageEmbed("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
         }
     }
 
@@ -98,7 +96,7 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
                 .setDescription("""
                         Vote for the bot at Top.gg!
                         https://top.gg/bot/1318005521986486332""")
-                .setColor(DISCORD_BLUE)
+                .setColor(getEmbedColor())
                 .build();
 
         requestContext.sendMessageEmbeds(embed);
@@ -119,5 +117,9 @@ public class MiscRequestHandlerImpl implements MiscRequestHandler {
             }
         }
         return false;
+    }
+
+    private Color getEmbedColor() {
+        return Color.decode(System.getProperty("embed.color"));
     }
 }

@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 
 public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler {
 
-    private static final Color DISCORD_BLUE = Color.decode("#5566f2");
-
     private final AutoMessageBotService botService;
 
     public AutoMessageRequestHandlerImpl() {
@@ -73,7 +71,10 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
 
             int numOfCommands = botService.getNumOfCommands(requestContext.getGuild().getIdLong(), guildChannel.getIdLong());
             if (numOfCommands >= 5) {
-                requestContext.sendMessage("Only 5 auto message commands can be set up per channel.");
+                MessageEmbed embed = new EmbedBuilder().setTitle("Only 5 auto message commands can be set up per channel.")
+                        .setColor(getEmbedColor())
+                        .build();
+                requestContext.sendMessageEmbeds(embed);
                 return;
             }
 
@@ -101,10 +102,10 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             sendSetupEmbed(command, guildChannel, requestContext);
         }
         catch (InvalidPermissionException e) {
-            requestContext.sendMessage(e.getMessage());
+            requestContext.sendSimpleMessageEmbed(e.getMessage());
         }
         catch (IllegalArgumentException | IllegalStateException e) {
-            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
+            requestContext.sendSimpleMessageEmbed("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
         }
     }
 
@@ -121,7 +122,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully added new channel")
-                .setColor(DISCORD_BLUE)
+                .setColor(getEmbedColor())
                 .setDescription(description)
                 .build();
 
@@ -142,7 +143,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             List<AutoMessageCommand> commands = botService.getCommandsForGuild(requestContext.getGuild().getIdLong());
             List<AutoMessageCommand> channelCommands = commands.stream().filter(c -> c.getChannelDiscordId().equals(channelDiscordId)).toList();
             if (channelCommands.isEmpty()) {
-                requestContext.sendMessage("There are currently no auto message commands for that channel");
+                requestContext.sendSimpleMessageEmbed("There are currently no auto message commands for that channel");
                 return;
             }
 
@@ -150,10 +151,10 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             sendRemoveEmbed(channelCommands, requestContext.getGuild().getGuildChannelById(channelCommands.get(0).getChannelDiscordId()), requestContext);
         }
         catch (InvalidPermissionException e) {
-            requestContext.sendMessage(e.getMessage());
+            requestContext.sendSimpleMessageEmbed(e.getMessage());
         }
         catch (IllegalArgumentException e) {
-            requestContext.sendMessage("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
+            requestContext.sendSimpleMessageEmbed("The command must follow this format `" + requestContext.getCommand().getFullDescription(requestContext.getPrefix(), false) + "`");
         }
     }
 
@@ -167,7 +168,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         MessageEmbed embed = embedBuilder.setTitle(":white_check_mark: Successfully removed channel")
-                .setColor(DISCORD_BLUE)
+                .setColor(getEmbedColor())
                 .setDescription(description)
                 .build();
 
@@ -183,14 +184,14 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
 
             List<AutoMessageCommand> commands = botService.getCommandsForGuild(requestContext.getGuild().getIdLong());
             if (commands.isEmpty()) {
-                requestContext.sendMessage("There are currently no auto message commands.");
+                requestContext.sendSimpleMessageEmbed("There are currently no auto message commands.");
             }
             else {
                 sendViewEmbeds(commands, requestContext);
             }
         }
         catch (InvalidPermissionException e) {
-            requestContext.sendMessage(e.getMessage());
+            requestContext.sendSimpleMessageEmbed(e.getMessage());
         }
     }
 
@@ -200,8 +201,7 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
         List<MessageEmbed> embeds = new ArrayList<>();
         embeds.add(new EmbedBuilder().setTitle("Auto-Message Channels")
                 .setDescription(String.format("**%s channels & %s messages configured**", channelIdToCommands.size(), commands.size()))
-                .setColor(DISCORD_BLUE).build());
-
+                .setColor(getEmbedColor()).build());
 
         for (Map.Entry<Long, List<AutoMessageCommand>> entry : channelIdToCommands.entrySet()) {
             GuildChannel guildChannel = requestContext.getGuild().getGuildChannelById(entry.getKey());
@@ -210,8 +210,8 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             }
 
             EmbedBuilder embedBuilder = new EmbedBuilder();
-            MessageEmbed embed = embedBuilder.setTitle(String.format("#%s [%s]", guildChannel.getName(), guildChannel.getId()))
-                    .setColor(DISCORD_BLUE)
+            MessageEmbed embed = embedBuilder.setTitle(String.format("<#%s>", guildChannel.getId()))
+                    .setColor(getEmbedColor())
                     .setDescription(getCommandDisplays(entry.getValue()))
                     .build();
             embeds.add(embed);
@@ -250,5 +250,9 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             }
         }
         return false;
+    }
+
+    private Color getEmbedColor() {
+        return Color.decode(System.getProperty("embed.color"));
     }
 }
