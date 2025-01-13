@@ -21,10 +21,10 @@ public class Application {
         String env = System.getenv("app.profiles.active");
         String propertiesFilename;
         if (env == null) {
-            propertiesFilename = "config.properties";
+            propertiesFilename = "application.properties";
         }
         else {
-            propertiesFilename = "config-" + env + ".properties";
+            propertiesFilename = "application-" + env + ".properties";
         }
 
         Properties props = new Properties();

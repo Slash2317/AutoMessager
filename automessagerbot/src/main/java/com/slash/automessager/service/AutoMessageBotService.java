@@ -12,6 +12,7 @@ public interface AutoMessageBotService {
     BasicGuildInfo loadGuildInfo(Long guildDiscordId);
     Integer insertGuild(AutoMessageGuild guild);
     void updateGuildPrefix(Integer guildId, Long guildDiscordId, String prefix);
+    int getNumOfCommands(Long guildDiscordId, Long channelDiscordId);
     List<AutoMessageCommand> getCommandsForGuild(Long guildDiscordId);
     void insertCommand(AutoMessageCommand command);
     void deleteCommands(List<Integer> commandIds);

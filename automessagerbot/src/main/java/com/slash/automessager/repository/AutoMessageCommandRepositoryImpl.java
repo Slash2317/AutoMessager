@@ -129,4 +129,36 @@ public class AutoMessageCommandRepositoryImpl implements AutoMessageCommandRepos
             DbUtils.closeQuietly(conn, stmt, null);
         }
     }
+
+    @Override
+    public int countByBotIdAndGuildDiscordIdAndChannelDiscordId(Integer botId, Long guildDiscordId, Long channelDiscordId) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            conn = Application.getDataSource().getConnection();
+            stmt = conn.prepareStatement("""
+                SELECT COUNT(auto_message_command_id)
+                FROM auto_message_command
+                WHERE auto_message_bot_id = ?
+                    AND guild_discord_id = ?
+                    AND channel_discord_id = ?""");
+            stmt.setInt(1, botId);
+            stmt.setLong(2, guildDiscordId);
+            stmt.setLong(3, channelDiscordId);
+            rs = stmt.executeQuery();
+
+            if (!rs.next()) {
+                return 0;
+            }
+            return rs.getInt(1);
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        finally {
+            DbUtils.closeQuietly(conn, stmt, rs);
+        }
+    }
 }

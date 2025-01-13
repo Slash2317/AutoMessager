@@ -10,4 +10,5 @@ public interface AutoMessageCommandRepository {
     List<AutoMessageCommand> findAllByBotIdAndGuildDiscordId(Integer botId, Long guildDiscordId);
     void insertCommand(AutoMessageCommand command);
     void deleteAllByIdIn(List<Integer> commandIds);
+    int countByBotIdAndGuildDiscordIdAndChannelDiscordId(Integer botId, Long guildDiscordId, Long channelDiscordId);
 }

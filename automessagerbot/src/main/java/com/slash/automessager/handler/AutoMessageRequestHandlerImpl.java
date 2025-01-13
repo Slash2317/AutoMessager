@@ -71,6 +71,12 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
                 throw new IllegalArgumentException("Invalid message supplied");
             }
 
+            int numOfCommands = botService.getNumOfCommands(requestContext.getGuild().getIdLong(), guildChannel.getIdLong());
+            if (numOfCommands >= 5) {
+                requestContext.sendMessage("Only 5 auto message commands can be set up per channel.");
+                return;
+            }
+
             BasicGuildInfo guildInfo = botService.loadGuildInfo(requestContext.getGuild().getIdLong());
             Integer guildId;
             if (guildInfo == null) {
@@ -82,7 +88,6 @@ public class AutoMessageRequestHandlerImpl implements AutoMessageRequestHandler 
             else {
                 guildId = guildInfo.getGuildId();
             }
-
 
             AutoMessageCommand command = new AutoMessageCommand();
             command.setBotId(Application.getBotCache().getBot().getId());

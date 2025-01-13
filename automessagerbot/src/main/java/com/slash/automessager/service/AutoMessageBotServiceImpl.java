@@ -53,6 +53,11 @@ public class AutoMessageBotServiceImpl implements AutoMessageBotService {
     }
 
     @Override
+    public int getNumOfCommands(Long guildDiscordId, Long channelDiscordId) {
+        return commandRepository.countByBotIdAndGuildDiscordIdAndChannelDiscordId(Application.getBotCache().getBot().getId(), guildDiscordId, channelDiscordId);
+    }
+
+    @Override
     public List<AutoMessageCommand> getCommandsForGuild(Long guildDiscordId) {
         return commandRepository.findAllByBotIdAndGuildDiscordId(Application.getBotCache().getBot().getId(), guildDiscordId);
     }
